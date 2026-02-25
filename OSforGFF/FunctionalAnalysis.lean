@@ -262,25 +262,6 @@ These theorems are used to construct specific multiplication operators
 (e.g., momentumWeightSqrt_mul_CLM) without repeating technical details.
 -/
 
-/-- Helper lemma for the norm bound of the multiplication operator. -/
-lemma linfty_mul_L2_bound_aux {μ : Measure α}
-    (g : α → ℂ) (_hg_meas : Measurable g) (C : ℝ) (_hC : 0 < C)
-    (hg_bound : ∀ᵐ x ∂μ, ‖g x‖ ≤ C)
-    (f : Lp ℂ 2 μ) :
-    eLpNorm (g * ⇑f) 2 μ ≤ ENNReal.ofReal C * eLpNorm f 2 μ := by
-  -- For ℂ, multiplication is the same as scalar multiplication
-  have h_eq : g * ⇑f = g • ⇑f := rfl
-  rw [h_eq]
-  -- Use the L∞ × Lp → Lp bound for smul
-  have h_smul_le := eLpNorm_smul_le_eLpNorm_top_mul_eLpNorm (p := 2)
-    (Lp.memLp f).aestronglyMeasurable g
-  have h_g_norm : eLpNorm g ∞ μ ≤ ENNReal.ofReal C := by
-    rw [eLpNorm_exponent_top]
-    exact eLpNormEssSup_le_of_ae_bound hg_bound
-  calc eLpNorm (g • ⇑f) 2 μ
-      ≤ eLpNorm g ∞ μ * eLpNorm f 2 μ := h_smul_le
-    _ ≤ ENNReal.ofReal C * eLpNorm f 2 μ := by gcongr
-
 /-- Given a measurable function `g` that is essentially bounded by `C`,
     multiplication by `g` defines a bounded linear operator on `L²`. -/
 noncomputable def linfty_mul_L2_CLM {μ : Measure α}
