@@ -146,7 +146,7 @@ def pointwiseMulCLM : ℂ →L[ℂ] ℂ →L[ℂ] ℂ := ContinuousLinearMap.mul
 
 /-- Multiplication lifted to the Schwartz space. -/
 def schwartzMul (g : TestFunctionℂ) : TestFunctionℂ →L[ℂ] TestFunctionℂ :=
-  (SchwartzMap.bilinLeftCLM pointwiseMulCLM (SchwartzMap.hasTemperateGrowth_general g))
+  (SchwartzMap.bilinLeftCLM pointwiseMulCLM g.hasTemperateGrowth)
 
 
 

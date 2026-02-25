@@ -652,6 +652,7 @@ lemma SchwartzMap.integrable_mul_bounded (f : SchwartzMap E ℂ) (g : E → ℂ)
 /-- The conjugate of a Schwartz function is integrable. -/
 lemma SchwartzMap.integrable_conj (f : SchwartzMap E ℂ) :
     Integrable (fun y => starRingEnd ℂ (f y)) μ := by
+  -- MD: this should be proved by showing that `(fun y => starRingEnd ℂ (f y))` is a Schwartz function
   have hf_int : Integrable f μ := f.integrable
   have hf_star_meas : AEStronglyMeasurable (fun y => starRingEnd ℂ (f y)) μ :=
     hf_int.aestronglyMeasurable.star
@@ -673,9 +674,9 @@ lemma norm_exp_I_mul_real (r : ℝ) : ‖Complex.exp (Complex.I * r)‖ = 1 :=
 
 /-- Complex exponential of negative pure imaginary argument has norm 1. -/
 lemma norm_exp_neg_I_mul_real (r : ℝ) : ‖Complex.exp (-Complex.I * r)‖ = 1 := by
-  rw [Complex.norm_exp]
-  simp only [neg_mul, Complex.neg_re, Complex.mul_re, Complex.I_re, Complex.ofReal_re,
-    zero_mul, Complex.I_im, Complex.ofReal_im, mul_zero, sub_zero, neg_zero, Real.exp_zero]
+  rw [neg_mul, ←mul_neg]
+  norm_cast
+  apply norm_exp_I_mul_ofReal (-r)
 
 /-! ## Linear Vanishing Bound for Schwartz Functions
 
@@ -826,6 +827,7 @@ theorem schwartz_integrable_decay {V : Type*} [NormedAddCommGroup V]
     [NormedSpace ℝ V] [FiniteDimensional ℝ V] [MeasureSpace V] [BorelSpace V]
     (f : SchwartzMap V ℂ) (N : ℕ) (_hN : Module.finrank ℝ V < N) :
     ∃ C : ℝ, 0 < C ∧ ∀ x : V, ‖f x‖ ≤ C / (1 + ‖x‖)^N := by
+  -- MD: Should be very easy as well
   -- Get bounds for each k ≤ N
   have h_decay : ∀ k, ∃ C_k > 0, ∀ x, ‖x‖^k * ‖iteratedFDeriv ℝ 0 f x‖ ≤ C_k := fun k => SchwartzMap.decay f k 0
   choose C hC_pos hC using h_decay
