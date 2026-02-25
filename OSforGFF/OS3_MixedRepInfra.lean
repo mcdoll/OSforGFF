@@ -19,6 +19,7 @@ import Mathlib.Analysis.SpecialFunctions.Gamma.Beta
 import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Order.Filter.Basic
 import Mathlib.MeasureTheory.Function.JacobianOneDim
+import Mathlib.MeasureTheory.Integral.Gamma
 
 import OSforGFF.Basic
 import OSforGFF.Euclidean

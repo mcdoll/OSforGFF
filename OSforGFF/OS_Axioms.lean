@@ -123,7 +123,7 @@ def OS3_ReflectionPositivity (dμ_config : ProbabilityMeasure FieldConfiguration
 def OS4_Clustering (dμ_config : ProbabilityMeasure FieldConfiguration) : Prop :=
   ∀ (f g : TestFunction) (ε : ℝ), ε > 0 → ∃ (R : ℝ), R > 0 ∧ ∀ (a : SpaceTime),
     ‖a‖ > R →
-    ‖GJGeneratingFunctional dμ_config (f + g.translate a) -
+    ‖GJGeneratingFunctional dμ_config (f + g.compSubConstCLM ℝ a) -
      GJGeneratingFunctional dμ_config f * GJGeneratingFunctional dμ_config g‖ < ε
 
 /-- OS4 (Ergodicity): For generating functions A(φ) = Σⱼ zⱼ e^{⟨φ,fⱼ⟩}, the time average

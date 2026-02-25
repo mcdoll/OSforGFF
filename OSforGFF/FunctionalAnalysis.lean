@@ -10,49 +10,16 @@ import Mathlib.Analysis.SpecialFunctions.Bernstein
 import Mathlib.Analysis.SpecialFunctions.Gamma.Basic
 import Mathlib.Data.Nat.Factorial.DoubleFactorial
 import Mathlib.MeasureTheory.Function.Holder
-/-import Mathlib.Analysis.Analytic.Basic
-import Mathlib.Analysis.Analytic.Constructions-/
-
---import Mathlib.Topology.Algebra.Module.LinearMapPiProd
-
-/-import Mathlib.MeasureTheory.Function.LpSpace.Basic
-import Mathlib.MeasureTheory.Function.L2Space
-import Mathlib.MeasureTheory.Integral.Bochner.Basic
-import Mathlib.MeasureTheory.Measure.CharacteristicFunction
-
-import Mathlib.Analysis.RCLike.Basic
-import Mathlib.Analysis.Normed.Module.RCLike.Basic
-import Mathlib.Analysis.Normed.Module.RCLike.Real
-import Mathlib.Analysis.Normed.Field.Basic
-import Mathlib.Analysis.Complex.Basic
-import Mathlib.Analysis.Fourier.FourierTransform
-import Mathlib.Analysis.Fourier.Inversion
-import Mathlib.Analysis.InnerProductSpace.PiL2
-import Mathlib.Analysis.InnerProductSpace.EuclideanDist-/
-
-/-import Mathlib.Data.Real.Basic
-import Mathlib.Analysis.Calculus.BumpFunction.Convolution
-import Mathlib.Analysis.Calculus.BumpFunction.Normed
-import Mathlib.Analysis.Calculus.ContDiff.FTaylorSeries
-
-import Mathlib.Analysis.Calculus.MeanValue
-import Mathlib.Analysis.Calculus.IteratedDeriv.Lemmas
-import Mathlib.Analysis.Calculus.LineDeriv.Basic
-
-import Mathlib.Data.Nat.Choose.Sum-/
 
 import Mathlib.Analysis.Calculus.BumpFunction.Normed
---import Mathlib.MeasureTheory.Function.LpSpace.ContinuousFunctions
---import Mathlib.MeasureTheory.Function.LpSpace.ContinuousCompMeasurePreserving
 import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
 
 import Mathlib.Probability.Independence.Basic
 import Mathlib.Probability.Density
 
-import Mathlib.Analysis.SpecialFunctions.Integrability.Basic
-import Mathlib.MeasureTheory.Measure.Lebesgue.VolumeOfBalls
-import Mathlib.MeasureTheory.Function.LpSeminorm.CompareExp
 import Mathlib.MeasureTheory.Constructions.HaarToSphere
+
+import OSforGFF.ForMathlib.SchwartzMap
 
 /-!
 ## Functional Analysis for AQFT
@@ -779,33 +746,11 @@ fact in harmonic analysis: if f ∈ 𝒮(ℝⁿ), then f(· - a) ∈ 𝒮(ℝⁿ
 **Reference:** Stein-Weiss, "Fourier Analysis", Chapter 1; any Schwartz space text
 -/
 
-/-- Translation `x ↦ x - a` has temperate growth. -/
-lemma sub_const_hasTemperateGrowth {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] (a : E) :
-    Function.HasTemperateGrowth (fun x : E => x - a) := by fun_prop
+@[deprecated (since := "now")]
+alias SchwartzMap.translate := SchwartzMap.compSubConstCLM
 
-/-- Translation `x ↦ x - a` is antilipschitz (actually an isometry). -/
-lemma sub_const_antilipschitz {E : Type*} [NormedAddCommGroup E] (a : E) :
-    AntilipschitzWith 1 (fun x : E => x - a) := by
-  intro x y
-  simp [edist_dist, dist_eq_norm]
-
-/-- **Schwartz functions are invariant under translation.**
-    For f ∈ 𝒮(E, F) and a ∈ E, the translated function f(· - a) is also in 𝒮(E, F).
-
-    This is proved using Mathlib's `compCLMOfAntilipschitz`: translation is composition
-    with `x ↦ x - a`, which has temperate growth and is antilipschitz (an isometry). -/
-noncomputable def SchwartzMap.translate {E F : Type*}
-    [NormedAddCommGroup E] [NormedSpace ℝ E]
-    [NormedAddCommGroup F] [NormedSpace ℝ F]
-    (f : SchwartzMap E F) (a : E) : SchwartzMap E F :=
-  SchwartzMap.compCLMOfAntilipschitz ℝ (sub_const_hasTemperateGrowth a) (sub_const_antilipschitz a) f
-
-@[simp]
-theorem SchwartzMap.translate_apply {E F : Type*}
-    [NormedAddCommGroup E] [NormedSpace ℝ E]
-    [NormedAddCommGroup F] [NormedSpace ℝ F]
-    (f : SchwartzMap E F) (a x : E) :
-    f.translate a x = f (x - a) := rfl
+@[deprecated (since := "now")]
+alias SchwartzMap.translate_apply := SchwartzMap.compSubConstCLM_apply
 
 /-! ### Schwartz Integrable Decay
 
