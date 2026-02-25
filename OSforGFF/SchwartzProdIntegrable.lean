@@ -108,15 +108,8 @@ theorem schwartz_vanishing_linear_bound (f : TestFunctionℂ)
   -- Connection: ‖fderiv ℝ f y‖ = ‖iteratedFDeriv ℝ 1 f y‖ (via curry isomorphism)
   have h_fderiv_bound : ∀ y ∈ (Set.univ : Set SpaceTime), ‖fderiv ℝ f y‖ ≤ C_deriv := by
     intro y _
-    -- Use: ‖iteratedFDeriv ℝ 1 f y‖ = ‖fderiv ℝ f y‖
-    -- This follows from iteratedFDeriv 1 f = curryLeftEquiv.symm ∘ fderiv f ∘ iteratedFDeriv 0 f
-    -- where curryLeftEquiv is an isometry
-    have h_norm_eq : ‖iteratedFDeriv ℝ 1 f y‖ = ‖fderiv ℝ f y‖ := by
-      -- iteratedFDeriv_succ_eq_comp_left gives:
-      -- iteratedFDeriv ℝ 1 f = curryLeftEquiv.symm ∘ fderiv ℝ (iteratedFDeriv ℝ 0 f)
-      -- And iteratedFDeriv ℝ 0 f = f via continuousMultilinearCurryFin0
-      rw [← iteratedFDerivWithin_univ, ← fderivWithin_univ]
-      exact norm_iteratedFDerivWithin_one f uniqueDiffWithinAt_univ
+    have h_norm_eq : ‖iteratedFDeriv ℝ 1 f y‖ = ‖fderiv ℝ f y‖ :=
+      norm_iteratedFDeriv_one f
     linarith [h_deriv_bound y]
 
   -- Apply the Mean Value Theorem (Convex.norm_image_sub_le_of_norm_hasFDerivWithin_le)
@@ -309,12 +302,6 @@ lemma continuous_spacetimeOfTimeSpace_right (t : ℝ) : Continuous (spacetimeOfT
     Uses decay transfer: 4D Schwartz decay implies 3D integrability via norm comparison. -/
 lemma schwartz_time_slice_integrable (f : TestFunctionℂ) (t : ℝ) :
     Integrable (fun x : SpatialCoords3 => f (spacetimeOfTimeSpace t x)) volume := by
-  /-simp_rw [← spacetimeDecomp_symm_eq_spacetimeOfTimeSpace]
-  rw [← MeasureTheory.integrable_norm_iff]
-  · apply schwartz_slice_integrable
-  refine Continuous.comp_aestronglyMeasurable ?_ ?_
-  \.
-  sorry-/
   -- Strategy: Show the function has rapid decay and use integrability of decay functions
   --
   -- Key facts:
@@ -339,11 +326,7 @@ lemma schwartz_time_slice_integrable (f : TestFunctionℂ) (t : ℝ) :
     -- Convert between (1+‖x‖)^(-5:ℝ) and C/(1+‖x‖)^5
     have h_eq : ∀ x : SpatialCoords3, C / (1 + ‖x‖) ^ 5 = C * (1 + ‖x‖) ^ (-(5 : ℝ)) := by
       intro x
-      have h_pos : 0 < 1 + ‖x‖ := by linarith [norm_nonneg x]
-      have h1 : ((1 + ‖x‖) ^ 5)⁻¹ = (1 + ‖x‖) ^ (-(5 : ℝ)) := by
-        rw [← Real.rpow_natCast (1 + ‖x‖) 5, ← Real.rpow_neg (le_of_lt h_pos)]
-        simp
-      rw [div_eq_mul_inv, h1]
+      norm_cast
     simp_rw [h_eq]
     exact h_int.const_mul C
 
@@ -358,7 +341,7 @@ lemma schwartz_time_slice_integrable (f : TestFunctionℂ) (t : ℝ) :
     have h_norm_ge : ‖spacetimeOfTimeSpace t x‖ ≥ ‖x‖ :=
       spacetimeOfTimeSpace_norm_ge t x
     have h_bracket_ge : 1 + ‖spacetimeOfTimeSpace t x‖ ≥ 1 + ‖x‖ := by linarith
-    have h_bracket_pos : 0 < 1 + ‖x‖ := by linarith [norm_nonneg x]
+    have h_bracket_pos : 0 < 1 + ‖x‖ := by positivity
     have h_pow_le : (1 + ‖x‖)^5 ≤ (1 + ‖spacetimeOfTimeSpace t x‖)^5 := by
       apply pow_le_pow_left₀ (by linarith [norm_nonneg x]) h_bracket_ge
     calc ‖f (spacetimeOfTimeSpace t x)‖
