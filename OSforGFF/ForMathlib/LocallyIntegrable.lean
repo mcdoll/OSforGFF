@@ -8,104 +8,81 @@ open MeasureTheory
 Functions with polynomial decay are locally integrable in finite dimensions.
 -/
 
-open Set Metric in
-/-- Local version of `integrable_fun_norm_addHaar`: integrability of radial functions on balls.
-    If the radial part is integrable on (0, r), then the function is integrable on ball 0 r.
+section radial
 
-    Key technique: Use indicator functions to reduce to the global `integrable_fun_norm_addHaar`.
-    - Define g := indicator (Iio r) f, so g(y) = f(y) for y < r, else 0
-    - Then indicator (ball 0 r) (f ∘ ‖·‖) = g ∘ ‖·‖
-    - Apply global lemma to g -/
-lemma integrableOn_ball_of_radial {E F : Type*}
+variable {E F : Type*}
     [NormedAddCommGroup E] [NormedSpace ℝ E] [Nontrivial E]
     [FiniteDimensional ℝ E] [MeasurableSpace E] [BorelSpace E]
     [NormedAddCommGroup F] [NormedSpace ℝ F]
     (μ : Measure E) [μ.IsAddHaarMeasure]
-    {f : ℝ → F} {r : ℝ} (_hr : 0 < r)
-    (hint : IntegrableOn (fun y => y ^ (Module.finrank ℝ E - 1) • f y) (Ioo 0 r) volume) :
-    IntegrableOn (fun x : E => f ‖x‖) (ball (0 : E) r) μ := by
-  -- Key: indicator (ball 0 r) (f ∘ ‖·‖) = (indicator (Iio r) f) ∘ ‖·‖
-  have h_eq : indicator (ball (0 : E) r) (fun x : E => f ‖x‖) =
-      fun x : E => indicator (Iio r) f ‖x‖ := by
-    ext x
-    simp only [indicator, mem_ball_zero_iff, mem_Iio]
-  -- IntegrableOn ↔ Integrable of indicator
-  rw [← integrable_indicator_iff measurableSet_ball, h_eq]
-  -- Now apply the global lemma integrable_fun_norm_addHaar
-  rw [integrable_fun_norm_addHaar μ (f := indicator (Iio r) f)]
-  -- The RHS is IntegrableOn (y^(d-1) • (indicator (Iio r) f) y) (Ioi 0)
-  -- Since indicator (Iio r) f = 0 on [r, ∞), this equals IntegrableOn (y^(d-1) • f y) (Ioo 0 r)
-  have h_supp : ∀ y ∈ Ioi (0 : ℝ), y ^ (Module.finrank ℝ E - 1) • indicator (Iio r) f y =
-      indicator (Ioo 0 r) (fun y => y ^ (Module.finrank ℝ E - 1) • f y) y := by
-    intro y hy
-    simp only [indicator, mem_Ioo, mem_Iio, mem_Ioi] at hy ⊢
-    by_cases hyr : y < r
-    · simp only [hyr, hy, and_self, ↓reduceIte]
-    · simp only [hyr, hy, and_false, ↓reduceIte, smul_zero]
-  rw [integrableOn_congr_fun h_supp measurableSet_Ioi]
-  rw [← integrable_indicator_iff measurableSet_Ioo] at hint
-  exact hint.integrableOn -- finishes the proof
-  /-rw [← integrableOn_univ] at hint
-  rw [MeasureTheory.integrableOn_congr_set_ae (t := Set.univ)]
-  · exact hint
-  · -- nah
-    sorry-/
 
-variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
+open Set Metric in
+/-- A radial function `x ↦ f ‖x‖` is integrable on a ball if and only if `fun x ↦ x ^ (d - 1) • f x` is integrable
+on the interval. -/
+lemma integrableOn_fun_norm_addHaar
+    {f : ℝ → F} {r : ℝ} (_hr : 0 < r) :
+    IntegrableOn (fun x : E => f ‖x‖) (ball (0 : E) r) μ ↔
+    IntegrableOn (fun y => y ^ (Module.finrank ℝ E - 1) • f y) (Ioo 0 r) volume := by
+  calc
+    _ ↔ Integrable (fun x ↦ (Iio r).indicator f ‖x‖) μ := by
+      rw [← integrable_indicator_iff measurableSet_ball]
+      apply integrable_congr
+      filter_upwards with x
+      simp [indicator]
+    _ ↔ IntegrableOn ((Ioo 0 r).indicator fun y ↦ y ^ (Module.finrank ℝ E - 1) • f y) (Ioi 0) volume := by
+      rw [integrable_fun_norm_addHaar μ (f := indicator (Iio r) f),
+        integrableOn_congr_fun _ measurableSet_Ioi]
+      intro x (hx : 0 < x)
+      by_cases hxr : x < r <;> simp [hxr, hx]
+    _ ↔ Integrable ((Ioo 0 r).indicator fun y ↦ y ^ (Module.finrank ℝ E - 1) • f y) volume  := by
+      rw [MeasureTheory.integrableOn_iff_integrable_of_support_subset]
+      intro x hx
+      simp only [support_indicator, mem_inter_iff, mem_Ioo, Function.mem_support, ne_eq,
+        smul_eq_zero, pow_eq_zero_iff', not_or, not_and, Decidable.not_not] at hx
+      refine mem_Ioi.mpr hx.1.1
+    _ ↔ IntegrableOn (fun y ↦ y ^ (Module.finrank ℝ E - 1) • f y) (Ioo 0 r) volume := by
+      rw [← integrable_indicator_iff measurableSet_Ioo, ← integrableOn_univ]
+
+end radial
+
+variable {E F : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
   [MeasurableSpace E] [BorelSpace E]
+  [NormedAddCommGroup F]
 
 open Set Metric in
 /-- Integrability on balls for power-law decay functions.
     If |f(x)| ≤ C‖x‖^{-α} with α < d, then f is integrable on any ball centered at 0. -/
 lemma integrableOn_ball_of_rpow_decay' (hd : 1 ≤ Module.finrank ℝ E)
-    {f : E → ℝ} {C α r : ℝ}
+    {f : E → F} {C α r : ℝ}
     (_hC : 0 < C) (hα : α < Module.finrank ℝ E) (hr : 0 < r)
-    (h_decay : ∀ x, |f x| ≤ C * ‖x‖ ^ (-α))
+    (h_decay : ∀ x, ‖f x‖ ≤ C * ‖x‖ ^ (-α))
     (h_meas : AEStronglyMeasurable f volume) :
     IntegrableOn f (ball (0 : E) r) volume := by
-  -- We apply integrableOn_ball_of_radial with the bound function g(y) = C * y^(-α)
-  -- The radial integral becomes ∫_0^r y^(d-1) * C * y^(-α) dy = C * ∫_0^r y^(d-1-α) dy
-  -- which converges when d-1-α > -1, i.e., α < d
-
-  -- First show the bound function is radially integrable
   haveI : Nontrivial E := by
     apply Module.nontrivial_of_finrank_pos (R := ℝ)
     positivity
   have hint : IntegrableOn (fun y => y ^ (Module.finrank ℝ E - 1) • (C * y ^ (-α)))
       (Ioo 0 r) volume := by
     simp only [smul_eq_mul]
-    -- Simplify y^(d-1) * (C * y^(-α)) = C * y^(d-1-α)
-    have h_simp : ∀ y ∈ Ioo (0 : ℝ) r, (y : ℝ) ^ (Module.finrank ℝ E - 1) * (C * y ^ (-α)) = C * y ^ ((Module.finrank ℝ E : ℝ) - 1 - α) := by
-      intro y hy
-      have hy_pos : 0 < y := hy.1
-      rw [mul_comm (y ^ _), mul_assoc]
-      congr 1
-      rw [← Real.rpow_natCast y (Module.finrank ℝ E - 1), ← Real.rpow_add hy_pos]
-      congr 1
-      simp only [Nat.cast_sub hd]
-      ring
-    rw [integrableOn_congr_fun h_simp measurableSet_Ioo]
-    -- Now show IntegrableOn (C * y^(d-1-α)) (Ioo 0 r)
-    -- First show the rpow part is integrable
     have h_rpow : IntegrableOn (fun y => y ^ ((Module.finrank ℝ E : ℝ) - 1 - α)) (Ioo 0 r) volume := by
       rw [intervalIntegral.integrableOn_Ioo_rpow_iff hr]
       linarith
-    exact h_rpow.const_mul C
-
-  -- Now use integrableOn_ball_of_radial and monotonicity
-  have h_bound := integrableOn_ball_of_radial volume hr hint
-  -- h_bound : IntegrableOn (fun x => C * ‖x‖^(-α)) (ball 0 r) volume
-
-  -- Show f is dominated by the bound
-  apply Integrable.mono' h_bound h_meas.restrict
+    apply IntegrableOn.congr_fun (h_rpow.const_mul C) ?_ measurableSet_Ioo
+    intro y ⟨hy₁, hy₂⟩
+    simp only
+    move_mul [C]
+    rw [← Real.rpow_natCast y (Module.finrank ℝ E - 1), ← Real.rpow_add hy₁]
+    congr
+    norm_cast
+  rw [← integrableOn_fun_norm_addHaar volume hr] at hint
+  apply Integrable.mono' hint h_meas.restrict
   filter_upwards with x
-  simp only [Real.norm_eq_abs]
   exact h_decay x
 
 
-theorem foo (hdim : 1 ≤ Module.finrank ℝ E ) {f : E → ℝ} {C α : ℝ}
+theorem foo (hdim : 1 ≤ Module.finrank ℝ E ) {f : E → F} {C α : ℝ}
     (hC : 0 < C) (hα : α < Module.finrank ℝ E)
-    (h_decay : ∀ x, |f x| ≤ C * ‖x‖ ^ (-α)) (h_meas : AEStronglyMeasurable f volume) :
+    (h_decay : ∀ x, ‖f x‖ ≤ C * ‖x‖ ^ (-α)) (h_meas : AEStronglyMeasurable f volume) :
     LocallyIntegrable f volume := by
   rw [locallyIntegrable_iff]
   intro K hK
