@@ -43,46 +43,51 @@ lemma integrableOn_ball_of_radial {E F : Type*}
     · simp only [hyr, hy, and_self, ↓reduceIte]
     · simp only [hyr, hy, and_false, ↓reduceIte, smul_zero]
   rw [integrableOn_congr_fun h_supp measurableSet_Ioi]
-  -- IntegrableOn (indicator (Ioo 0 r) g) (Ioi 0) ← IntegrableOn g (Ioo 0 r) since Ioo 0 r ⊆ Ioi 0
-  have : Integrable (indicator (Ioo 0 r) (fun y => y ^ (Module.finrank ℝ E - 1) • f y)) volume :=
-    hint.integrable_indicator measurableSet_Ioo
-  exact this.integrableOn
+  rw [← integrable_indicator_iff measurableSet_Ioo] at hint
+  exact hint.integrableOn -- finishes the proof
+  /-rw [← integrableOn_univ] at hint
+  rw [MeasureTheory.integrableOn_congr_set_ae (t := Set.univ)]
+  · exact hint
+  · -- nah
+    sorry-/
+
+variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteDimensional ℝ E]
+  [MeasurableSpace E] [BorelSpace E]
 
 open Set Metric in
 /-- Integrability on balls for power-law decay functions.
     If |f(x)| ≤ C‖x‖^{-α} with α < d, then f is integrable on any ball centered at 0. -/
-lemma integrableOn_ball_of_rpow_decay {d : ℕ} (hd : d ≥ 1)
-    {f : EuclideanSpace ℝ (Fin d) → ℝ} {C α r : ℝ}
-    (_hC : 0 < C) (hα : α < d) (hr : 0 < r)
+lemma integrableOn_ball_of_rpow_decay' (hd : 1 ≤ Module.finrank ℝ E)
+    {f : E → ℝ} {C α r : ℝ}
+    (_hC : 0 < C) (hα : α < Module.finrank ℝ E) (hr : 0 < r)
     (h_decay : ∀ x, |f x| ≤ C * ‖x‖ ^ (-α))
     (h_meas : AEStronglyMeasurable f volume) :
-    IntegrableOn f (ball (0 : EuclideanSpace ℝ (Fin d)) r) volume := by
-  haveI : Nontrivial (EuclideanSpace ℝ (Fin d)) := by
-    haveI : Nonempty (Fin d) := ⟨⟨0, hd⟩⟩
-    infer_instance
+    IntegrableOn f (ball (0 : E) r) volume := by
   -- We apply integrableOn_ball_of_radial with the bound function g(y) = C * y^(-α)
   -- The radial integral becomes ∫_0^r y^(d-1) * C * y^(-α) dy = C * ∫_0^r y^(d-1-α) dy
   -- which converges when d-1-α > -1, i.e., α < d
 
   -- First show the bound function is radially integrable
-  have hint : IntegrableOn (fun y => y ^ (Module.finrank ℝ (EuclideanSpace ℝ (Fin d)) - 1) • (C * y ^ (-α)))
+  haveI : Nontrivial E := by
+    apply Module.nontrivial_of_finrank_pos (R := ℝ)
+    positivity
+  have hint : IntegrableOn (fun y => y ^ (Module.finrank ℝ E - 1) • (C * y ^ (-α)))
       (Ioo 0 r) volume := by
-    have hfinrank : Module.finrank ℝ (EuclideanSpace ℝ (Fin d)) = d := by simp
-    simp only [hfinrank, smul_eq_mul]
+    simp only [smul_eq_mul]
     -- Simplify y^(d-1) * (C * y^(-α)) = C * y^(d-1-α)
-    have h_simp : ∀ y ∈ Ioo (0 : ℝ) r, (y : ℝ) ^ (d - 1) * (C * y ^ (-α)) = C * y ^ ((d : ℝ) - 1 - α) := by
+    have h_simp : ∀ y ∈ Ioo (0 : ℝ) r, (y : ℝ) ^ (Module.finrank ℝ E - 1) * (C * y ^ (-α)) = C * y ^ ((Module.finrank ℝ E : ℝ) - 1 - α) := by
       intro y hy
       have hy_pos : 0 < y := hy.1
       rw [mul_comm (y ^ _), mul_assoc]
       congr 1
-      rw [← Real.rpow_natCast y (d - 1), ← Real.rpow_add hy_pos]
+      rw [← Real.rpow_natCast y (Module.finrank ℝ E - 1), ← Real.rpow_add hy_pos]
       congr 1
       simp only [Nat.cast_sub hd]
       ring
     rw [integrableOn_congr_fun h_simp measurableSet_Ioo]
     -- Now show IntegrableOn (C * y^(d-1-α)) (Ioo 0 r)
     -- First show the rpow part is integrable
-    have h_rpow : IntegrableOn (fun y => y ^ ((d : ℝ) - 1 - α)) (Ioo 0 r) volume := by
+    have h_rpow : IntegrableOn (fun y => y ^ ((Module.finrank ℝ E : ℝ) - 1 - α)) (Ioo 0 r) volume := by
       rw [intervalIntegral.integrableOn_Ioo_rpow_iff hr]
       linarith
     exact h_rpow.const_mul C
@@ -97,62 +102,16 @@ lemma integrableOn_ball_of_rpow_decay {d : ℕ} (hd : d ≥ 1)
   simp only [Real.norm_eq_abs]
   exact h_decay x
 
-/-- Integrability away from the origin for bounded functions on compact sets. -/
-lemma integrableOn_compact_diff_ball {d : ℕ}
-    {f : EuclideanSpace ℝ (Fin d) → ℝ} {C α δ : ℝ} {K : Set (EuclideanSpace ℝ (Fin d))}
-    (hK : IsCompact K) (hC : 0 < C) (hδ : 0 < δ)
-    (h_decay : ∀ x, |f x| ≤ C * ‖x‖ ^ (-α))
-    (h_meas : AEStronglyMeasurable f volume) :
-    IntegrableOn f (K \ Metric.ball 0 δ) volume := by
-  -- On K \ ball 0 δ, ‖x‖ ≥ δ > 0 so the bound C * ‖x‖^(-α) is bounded
-  have h_finite : volume (K \ Metric.ball 0 δ) < ⊤ :=
-    (hK.diff Metric.isOpen_ball).measure_lt_top
-  by_cases hne : (K \ Metric.ball 0 δ).Nonempty
-  · -- The set is nonempty
-    obtain ⟨R, hR_pos, hR⟩ := hK.isBounded.exists_pos_norm_le
-    -- On K \ ball 0 δ, we have δ ≤ ‖x‖ ≤ R, so ‖x‖^(-α) is bounded
-    -- Use M = C * max (δ^(-α)) (R^(-α)) as bound (handles both signs of α)
-    let M := C * max (δ ^ (-α)) (R ^ (-α))
-    have hM_pos : 0 < M := by positivity
-    have h_bound : ∀ x ∈ K \ Metric.ball 0 δ, |f x| ≤ M := by
-      intro x hx
-      have hx_in_K : x ∈ K := hx.1
-      have hx_norm_lower : δ ≤ ‖x‖ := by
-        simp only [Set.mem_diff, Metric.mem_ball, dist_zero_right, not_lt] at hx
-        exact hx.2
-      have hx_norm_upper : ‖x‖ ≤ R := hR x hx_in_K
-      have hx_norm_pos : 0 < ‖x‖ := hδ.trans_le hx_norm_lower
-      calc |f x| ≤ C * ‖x‖ ^ (-α) := h_decay x
-        _ ≤ M := by
-          show C * ‖x‖ ^ (-α) ≤ C * max (δ ^ (-α)) (R ^ (-α))
-          apply mul_le_mul_of_nonneg_left _ (le_of_lt hC)
-          by_cases hα_nonneg : 0 ≤ α
-          · -- α ≥ 0: -α ≤ 0, so rpow is antitone, ‖x‖^(-α) ≤ δ^(-α)
-            have h1 : ‖x‖ ^ (-α) ≤ δ ^ (-α) := by
-              apply (Real.antitoneOn_rpow_Ioi_of_exponent_nonpos (neg_nonpos.mpr hα_nonneg))
-              · exact hδ
-              · exact hx_norm_pos
-              · exact hx_norm_lower
-            exact le_max_of_le_left h1
-          · -- α < 0: -α > 0, so rpow is monotone, ‖x‖^(-α) ≤ R^(-α)
-            push_neg at hα_nonneg
-            have h1 : ‖x‖ ^ (-α) ≤ R ^ (-α) := by
-              apply Real.rpow_le_rpow (le_of_lt hx_norm_pos) hx_norm_upper
-              linarith
-            exact le_max_of_le_right h1
-    have hM_bound : ∀ x ∈ K \ Metric.ball 0 δ, ‖f x‖ ≤ M := fun x hx => by
-      rw [Real.norm_eq_abs]
-      exact h_bound x hx
-    have h_const : IntegrableOn (fun _ => M) (K \ Metric.ball 0 δ) volume :=
-      MeasureTheory.integrableOn_const (μ := volume) (s := K \ Metric.ball 0 δ)
-        (by exact ne_top_of_lt h_finite)
-    have h_ae : ∀ᵐ x ∂(volume.restrict (K \ Metric.ball 0 δ)), ‖f x‖ ≤ M := by
-      rw [ae_restrict_iff' (hK.diff Metric.isOpen_ball).measurableSet]
-      exact ae_of_all _ hM_bound
-    exact h_const.mono' h_meas.restrict h_ae
-  · -- The set is empty
-    rw [Set.not_nonempty_iff_eq_empty.mp hne]
-    exact integrableOn_empty
+
+theorem foo (hdim : 1 ≤ Module.finrank ℝ E ) {f : E → ℝ} {C α : ℝ}
+    (hC : 0 < C) (hα : α < Module.finrank ℝ E)
+    (h_decay : ∀ x, |f x| ≤ C * ‖x‖ ^ (-α)) (h_meas : AEStronglyMeasurable f volume) :
+    LocallyIntegrable f volume := by
+  rw [locallyIntegrable_iff]
+  intro K hK
+  obtain ⟨R, hR_pos, hR⟩ := hK.isBounded.exists_pos_norm_lt
+  apply IntegrableOn.mono_set (t := Metric.ball 0 R) ?_ (fun x hx ↦ mem_ball_zero_iff.mpr (hR x hx))
+  apply integrableOn_ball_of_rpow_decay' hdim hC hα hR_pos h_decay h_meas
 
 /-- Functions with polynomial decay are locally integrable.
     For d-dimensional space, if α < d and |f(x)| ≤ C‖x‖^{-α}, then f is locally integrable. -/
@@ -162,27 +121,10 @@ theorem locallyIntegrable_of_rpow_decay_real {d : ℕ} (hd : d ≥ 3)
     (h_decay : ∀ x, |f x| ≤ C * ‖x‖ ^ (-α))
     (h_meas : AEStronglyMeasurable f volume) :
     LocallyIntegrable f volume := by
-  rw [locallyIntegrable_iff]
-  intro K hK
-  -- Cover K with ball 0 1 and K \ ball 0 (1/2)
-  have h_cover : K ⊆ (K ∩ Metric.ball 0 1) ∪ (K \ Metric.ball 0 (1/2)) := by
-    intro x hx
-    by_cases hxb : x ∈ Metric.ball 0 1
-    · exact Or.inl ⟨hx, hxb⟩
-    · simp only [Metric.mem_ball, dist_zero_right, not_lt] at hxb
-      right
-      constructor
-      · exact hx
-      · simp only [Metric.mem_ball, dist_zero_right, not_lt]
-        linarith
-  apply IntegrableOn.mono_set _ h_cover
-  apply IntegrableOn.union
-  · -- IntegrableOn f (K ∩ ball 0 1)
-    apply IntegrableOn.mono_set _ Set.inter_subset_right
-    exact integrableOn_ball_of_rpow_decay (by omega : d ≥ 1) hC hα (by norm_num : (0:ℝ) < 1)
-      h_decay h_meas
-  · -- IntegrableOn f (K \ ball 0 (1/2))
-    exact integrableOn_compact_diff_ball hK hC (by norm_num : (0:ℝ) < 1/2) h_decay h_meas
+  refine foo ?_ hC ?_ h_decay h_meas
+  · simp only [finrank_euclideanSpace, Fintype.card_fin]
+    linarith
+  · simp [hα]
 
 /-- **Polynomial decay is integrable in 3D**: The function 1/(1+‖x‖)^4 is integrable
     over SpatialCoords = EuclideanSpace ℝ (Fin 3).

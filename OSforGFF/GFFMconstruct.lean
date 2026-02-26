@@ -148,29 +148,19 @@ def isGaussianGJ (dμ_config : ProbabilityMeasure FieldConfiguration) : Prop :=
     applied to `TestFunction = SchwartzMap SpaceTime ℝ`. -/
 instance instNuclear_TestFunction : NuclearSpace TestFunction := schwartz_nuclear
 
+theorem exist_gaussianMeasureMinlos (m : ℝ) [Fact (0 < m)] :
+    ∃ x : ProbabilityMeasure (WeakDual ℝ TestFunction),
+      ∀ (f : TestFunction), ∫ (ω : WeakDual ℝ TestFunction), cexp (I * ↑(ω f)) ∂↑x =
+      gaussian_characteristic_functional (freeCovarianceFormR m) f := by
+  obtain ⟨H, _a, _b, T, h_eq⟩ := sqrtPropagatorEmbedding m
+  have h_zero : freeCovarianceFormR m (0) (0) = 0 := by simp [freeCovarianceFormR]
+  apply gaussian_measure_characteristic_functional (H := H) T (freeCovarianceFormR m)
+    (by simpa using h_eq) h_zero (freeCovarianceFormR_continuous m)
+
+open Classical in
 /-- Specialized Minlos construction for the free field using the square-root propagator embedding. -/
 noncomputable def constructGaussianMeasureMinlos_free (m : ℝ) [Fact (0 < m)] :
-  ProbabilityMeasure FieldConfiguration := by
-  classical
-  -- Build the embedding T with ‖T f‖² = freeCovarianceFormR m f f
-  have ex1 := sqrtPropagatorEmbedding m
-  let H : Type := Classical.choose ex1
-  have ex2 := Classical.choose_spec ex1
-  letI hNorm : NormedAddCommGroup H := Classical.choose ex2
-  have ex3 := Classical.choose_spec ex2
-  letI hInner : InnerProductSpace ℝ H := Classical.choose ex3
-  have ex4 := Classical.choose_spec ex3
-  let T : TestFunction →ₗ[ℝ] H := Classical.choose ex4
-  have h_eq : ∀ f : TestFunction, freeCovarianceFormR m f f = ‖T f‖^2 := Classical.choose_spec ex4
-  -- Continuity and normalization
-  have h_cont := freeCovarianceFormR_continuous m
-  have h_zero : freeCovarianceFormR m (0) (0) = 0 := by simp [freeCovarianceFormR]
-  -- Use Minlos: directly obtain a ProbabilityMeasure with the Gaussian characteristic functional
-  have h_minlos :=
-    gaussian_measure_characteristic_functional
-      (E := TestFunction) (H := H) T (freeCovarianceFormR m)
-      (by intro f; simpa using h_eq f) h_zero h_cont
-  exact Classical.choose h_minlos
+  ProbabilityMeasure FieldConfiguration := (exist_gaussianMeasureMinlos m).choose
 
 /-- The Gaussian Free Field with mass m > 0, constructed via specialized Minlos -/
 noncomputable def gaussianFreeField_free (m : ℝ) [Fact (0 < m)] : ProbabilityMeasure FieldConfiguration :=
@@ -184,32 +174,8 @@ noncomputable def gaussianFreeField_free (m : ℝ) [Fact (0 < m)] : ProbabilityM
 theorem gff_real_characteristic (m : ℝ) [Fact (0 < m)] :
   ∀ f : TestFunction,
     GJGeneratingFunctional (gaussianFreeField_free m) f =
-      Complex.exp (-(1/2 : ℂ) * (freeCovarianceFormR m f f : ℝ)) := by
-  classical
-  -- Rebuild the same Minlos construction to access its specification
-  have ex1 := sqrtPropagatorEmbedding m
-  let H : Type := Classical.choose ex1
-  have ex2 := Classical.choose_spec ex1
-  letI hNorm : NormedAddCommGroup H := Classical.choose ex2
-  have ex3 := Classical.choose_spec ex2
-  letI hInner : InnerProductSpace ℝ H := Classical.choose ex3
-  have ex4 := Classical.choose_spec ex3
-  let T : TestFunction →ₗ[ℝ] H := Classical.choose ex4
-  have h_eq : ∀ f : TestFunction, freeCovarianceFormR m f f = ‖T f‖^2 := Classical.choose_spec ex4
-  have h_cont := freeCovarianceFormR_continuous m
-  have h_zero : freeCovarianceFormR m (0) (0) = 0 := by simp [freeCovarianceFormR]
-  have h_minlos :=
-    gaussian_measure_characteristic_functional
-      (E := TestFunction) (H := H) T (freeCovarianceFormR m)
-      (by intro f; simpa using h_eq f) h_zero h_cont
-  -- Unfold the definition of our chosen ProbabilityMeasure to reuse the spec
-  have hchar := (Classical.choose_spec h_minlos)
-  intro f
-  -- By definition, gaussianFreeField_free chooses the same ProbabilityMeasure
-  -- returned by gaussian_measure_characteristic_functional
-  simpa [gaussianFreeField_free, constructGaussianMeasureMinlos_free,
-        GJGeneratingFunctional, gaussian_characteristic_functional]
-    using (hchar f)
+      Complex.exp (-(1/2 : ℂ) * (freeCovarianceFormR m f f : ℝ)) :=
+  (exist_gaussianMeasureMinlos m).choose_spec
 
 /-! ### Characteristic Function Bridge
 

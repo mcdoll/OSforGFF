@@ -169,11 +169,6 @@ abbrev FieldConfiguration := WeakDual ℝ (SchwartzMap SpaceTime ℝ)
 -- WeakDual already has the correct weak-* topology, we use the Borel σ-algebra
 instance : MeasurableSpace FieldConfiguration := borel _
 
-@[simp] lemma pairing_smul_real (ω : FieldConfiguration) (s : ℝ) (a : TestFunction) :
-  ω (s • a) = s * (ω a) :=
-  -- This follows from the linearity of the dual pairing
-  map_smul ω s a
-
 @[simp] def distributionPairingCLM (a : TestFunction) : FieldConfiguration →L[ℝ] ℝ where
   toFun ω := ω a
   map_add' ω₁ ω₂ := by
@@ -188,8 +183,6 @@ instance : MeasurableSpace FieldConfiguration := borel _
 
 @[simp] lemma distributionPairingCLM_apply (a : TestFunction) (ω : FieldConfiguration) :
     distributionPairingCLM a ω = ω a := rfl
-
-variable [SigmaFinite μ]
 
 /-! ## Glimm-Jaffe Generating Functional
 
@@ -234,8 +227,6 @@ def schwartz_comp_clm (f : TestFunctionℂ) (L : ℂ →L[ℝ] ℝ) : TestFuncti
           apply mul_le_mul_of_nonneg_left (hC x) (norm_nonneg _)
       _ = C * ‖L‖ := by ring
   )
-
-omit [SigmaFinite μ]
 
 /-- Evaluate `schwartz_comp_clm` pointwise. -/
 @[simp] lemma schwartz_comp_clm_apply (f : TestFunctionℂ) (L : ℂ →L[ℝ] ℝ) (x : SpaceTime) :
