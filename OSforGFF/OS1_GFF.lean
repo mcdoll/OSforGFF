@@ -141,12 +141,10 @@ theorem schwingerTwoPointFunction_eq_freeCovarianceKernel (m : ℝ) [Fact (0 < m
     - Near origin: K₁(mr) ~ 1/(mr), giving decay like 1/r²
     - Far from origin: K₁(mr) ~ exp(-mr), which is even faster decay -/
 theorem schwinger_two_point_decay_bound_GFF (m : ℝ) [Fact (0 < m)] :
-  ∃ C : ℝ, C > 0 ∧
-    ∀ x y : SpaceTime,
-      ‖SchwingerTwoPointFunction_GFF m (x - y)‖ ≤
-        C * ‖x - y‖ ^ (-2 : ℝ) := by
+  ∃ C : ℝ, ∀ x y : SpaceTime,
+    ‖SchwingerTwoPointFunction_GFF m (x - y)‖ ≤ C * ‖x - y‖ ^ (-2 : ℝ) := by
   obtain ⟨C, hC_pos, hC_bound⟩ := freeCovarianceKernel_decay_bound m (Fact.out)
-  refine ⟨C, hC_pos, fun x y => ?_⟩
+  refine ⟨C, fun x y => ?_⟩
   -- SchwingerTwoPointFunction_GFF is definitionally equal to freeCovarianceKernel
   rw [schwingerTwoPoint_eq_freeCovarianceKernel]
   -- The norm of a real number is its absolute value
@@ -158,12 +156,10 @@ theorem schwinger_two_point_decay_bound_GFF (m : ℝ) [Fact (0 < m)] :
     Note: At x = y (coincident points), the bound still holds since the abstract
     definition regularizes S(0) = 0 and 0^(-2) = 0 by Mathlib convention. -/
 theorem schwinger_two_point_decay_bound (m : ℝ) [Fact (0 < m)] :
-  ∃ C : ℝ, C > 0 ∧
-    ∀ x y : SpaceTime,
-      ‖SchwingerTwoPointFunction (gaussianFreeField_free m) (x - y)‖ ≤
-        C * ‖x - y‖ ^ (-2 : ℝ) := by
-  obtain ⟨C, hC_pos, hC_bound⟩ := schwinger_two_point_decay_bound_GFF m
-  refine ⟨C, hC_pos, fun x y => ?_⟩
+  ∃ C : ℝ, ∀ x y : SpaceTime,
+    ‖SchwingerTwoPointFunction (gaussianFreeField_free m) (x - y)‖ ≤ C * ‖x - y‖ ^ (-2 : ℝ) := by
+  obtain ⟨C, hC_bound⟩ := schwinger_two_point_decay_bound_GFF m
+  refine ⟨C, fun x y => ?_⟩
   by_cases h : x - y = 0
   · -- At coincident points x = y, both sides are 0
     simp only [h]
@@ -488,14 +484,12 @@ lemma gff_two_point_locally_integrable (m : ℝ) [Fact (0 < m)] :
   TwoPointIntegrable (gaussianFreeField_free m) := by
   unfold TwoPointIntegrable
   -- Obtain the decay bound
-  obtain ⟨C, hC_pos, h_decay⟩ := schwinger_two_point_decay_bound m
+  obtain ⟨C, h_decay⟩ := schwinger_two_point_decay_bound m
   -- Apply real version of the decay axiom
   refine locallyIntegrable_of_rpow_decay_real (d := STDimension) (C := C) (α := 2)
-    ?hd ?hC ?hα ?h_decay ?h_meas
+    ?hd ?hα ?h_decay ?h_meas
   · -- hd: STDimension = 4 ≥ 3
     norm_num [STDimension]
-  · -- hC: C > 0
-    exact hC_pos
   · -- hα: 2 < STDimension (2 < 4)
     norm_num [STDimension]
   · -- h_decay: Decay bound holds: convert two-argument decay to single-argument

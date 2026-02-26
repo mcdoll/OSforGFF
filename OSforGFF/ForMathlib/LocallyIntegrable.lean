@@ -19,8 +19,7 @@ variable {E F : Type*}
 open Set Metric in
 /-- A radial function `x ↦ f ‖x‖` is integrable on a ball if and only if `fun x ↦ x ^ (d - 1) • f x` is integrable
 on the interval. -/
-lemma integrableOn_fun_norm_addHaar
-    {f : ℝ → F} {r : ℝ} (_hr : 0 < r) :
+lemma integrableOn_fun_norm_addHaar {f : ℝ → F} {r : ℝ} (_hr : 0 < r) :
     IntegrableOn (fun x : E => f ‖x‖) (ball (0 : E) r) μ ↔
     IntegrableOn (fun y => y ^ (Module.finrank ℝ E - 1) • f y) (Ioo 0 r) volume := by
   calc
@@ -52,9 +51,8 @@ variable {E F : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [FiniteD
 open Set Metric in
 /-- Integrability on balls for power-law decay functions.
     If |f(x)| ≤ C‖x‖^{-α} with α < d, then f is integrable on any ball centered at 0. -/
-lemma integrableOn_ball_of_rpow_decay' (hd : 1 ≤ Module.finrank ℝ E)
-    {f : E → F} {C α r : ℝ}
-    (_hC : 0 < C) (hα : α < Module.finrank ℝ E) (hr : 0 < r)
+lemma integrableOn_ball_of_norm_le_rpow (hd : 1 ≤ Module.finrank ℝ E) {f : E → F} {C α r : ℝ}
+    (hα : α < Module.finrank ℝ E) (hr : 0 < r)
     (h_decay : ∀ x, ‖f x‖ ≤ C * ‖x‖ ^ (-α))
     (h_meas : AEStronglyMeasurable f volume) :
     IntegrableOn f (ball (0 : E) r) volume := by
@@ -68,10 +66,10 @@ lemma integrableOn_ball_of_rpow_decay' (hd : 1 ≤ Module.finrank ℝ E)
       rw [intervalIntegral.integrableOn_Ioo_rpow_iff hr]
       linarith
     apply IntegrableOn.congr_fun (h_rpow.const_mul C) ?_ measurableSet_Ioo
-    intro y ⟨hy₁, hy₂⟩
+    intro y ⟨hy, _⟩
     simp only
     move_mul [C]
-    rw [← Real.rpow_natCast y (Module.finrank ℝ E - 1), ← Real.rpow_add hy₁]
+    rw [← Real.rpow_natCast y (Module.finrank ℝ E - 1), ← Real.rpow_add hy]
     congr
     norm_cast
   rw [← integrableOn_fun_norm_addHaar volume hr] at hint
@@ -79,26 +77,24 @@ lemma integrableOn_ball_of_rpow_decay' (hd : 1 ≤ Module.finrank ℝ E)
   filter_upwards with x
   exact h_decay x
 
-
-theorem foo (hdim : 1 ≤ Module.finrank ℝ E ) {f : E → F} {C α : ℝ}
-    (hC : 0 < C) (hα : α < Module.finrank ℝ E)
+theorem locallyIntegrable_of_norm_le_rpow (hdim : 1 ≤ Module.finrank ℝ E ) {f : E → F} {C α : ℝ}
+    (hα : α < Module.finrank ℝ E)
     (h_decay : ∀ x, ‖f x‖ ≤ C * ‖x‖ ^ (-α)) (h_meas : AEStronglyMeasurable f volume) :
     LocallyIntegrable f volume := by
   rw [locallyIntegrable_iff]
   intro K hK
   obtain ⟨R, hR_pos, hR⟩ := hK.isBounded.exists_pos_norm_lt
   apply IntegrableOn.mono_set (t := Metric.ball 0 R) ?_ (fun x hx ↦ mem_ball_zero_iff.mpr (hR x hx))
-  apply integrableOn_ball_of_rpow_decay' hdim hC hα hR_pos h_decay h_meas
+  apply integrableOn_ball_of_norm_le_rpow hdim hα hR_pos h_decay h_meas
 
 /-- Functions with polynomial decay are locally integrable.
     For d-dimensional space, if α < d and |f(x)| ≤ C‖x‖^{-α}, then f is locally integrable. -/
 theorem locallyIntegrable_of_rpow_decay_real {d : ℕ} (hd : d ≥ 3)
-    {f : EuclideanSpace ℝ (Fin d) → ℝ} {C : ℝ} {α : ℝ}
-    (hC : C > 0) (hα : α < d)
+    {f : EuclideanSpace ℝ (Fin d) → ℝ} {C : ℝ} {α : ℝ} (hα : α < d)
     (h_decay : ∀ x, |f x| ≤ C * ‖x‖ ^ (-α))
     (h_meas : AEStronglyMeasurable f volume) :
     LocallyIntegrable f volume := by
-  refine foo ?_ hC ?_ h_decay h_meas
+  refine locallyIntegrable_of_norm_le_rpow ?_ ?_ h_decay h_meas
   · simp only [finrank_euclideanSpace, Fintype.card_fin]
     linarith
   · simp [hα]
