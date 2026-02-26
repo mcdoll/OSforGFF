@@ -51,9 +51,6 @@ noncomputable def bumpToSchwartz (φ : ContDiffBump (0 : SpaceTime)) : TestFunct
 theorem bumpToSchwartz_apply (φ : ContDiffBump (0 : SpaceTime)) (x : SpaceTime) :
     bumpToSchwartz φ x = φ.normed volume x := rfl
 
-@[deprecated (since := "now")]
-alias translateSchwartz := SchwartzMap.compSubConstCLM
-
 /-- The smeared two-point function using a bump function.
     This is well-defined (modulo bumpToSchwartz) and converges to the
     pointwise value as the bump width → 0.

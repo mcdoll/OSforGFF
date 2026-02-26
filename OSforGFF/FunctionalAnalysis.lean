@@ -102,9 +102,6 @@ open scoped SchwartzMap
 variable {𝕜 : Type} [RCLike 𝕜]
 variable {E : Type} [NormedAddCommGroup E] [NormedSpace ℂ E]
 
-@[deprecated (since := "now")]
-alias SchwartzMap.hasTemperateGrowth_general := SchwartzMap.hasTemperateGrowth
-
 /- Measure lifting from real to complex Lp spaces -/
 
 variable {α : Type*} [MeasurableSpace α] {μ : Measure α}
@@ -114,11 +111,6 @@ instance [MeasurableSpace α] (μ : Measure α) : MeasurableSpace (Lp ℝ 2 μ) 
 instance [MeasurableSpace α] (μ : Measure α) : BorelSpace (Lp ℝ 2 μ) := ⟨rfl⟩
 instance [MeasurableSpace α] (μ : Measure α) : MeasurableSpace (Lp ℂ 2 μ) := borel _
 instance [MeasurableSpace α] (μ : Measure α) : BorelSpace (Lp ℂ 2 μ) := ⟨rfl⟩
-
--- Check if Complex.ofRealCLM is an isometry
-@[deprecated "Complex.ofRealLI.isometry" (since := "now")]
-lemma Complex.ofRealCLM_isometry : Isometry (Complex.ofRealCLM : ℝ →L[ℝ] ℂ) :=
-  Complex.ofRealLI.isometry
 
 -- Use this to prove our specific case
 lemma Complex.ofRealCLM_continuous_compLp {α : Type*} [MeasurableSpace α] {μ : Measure α} :
@@ -523,25 +515,6 @@ theorem schwartz_vanishing_linear_bound_general
   exact h_mvt
 
 end SchwartzLinearBound
-
-/-! ### Schwartz Translation Invariance
-
-Translation by a constant vector preserves Schwartz class. This is a fundamental
-fact in harmonic analysis: if f ∈ 𝒮(ℝⁿ), then f(· - a) ∈ 𝒮(ℝⁿ) for any a ∈ ℝⁿ.
-
-**Mathematical proof:**
-1. Smoothness: f(x - a) is C∞ if f is (composition with smooth translation)
-2. Decay: ‖x‖^k |D^n f(x-a)| ≤ C' follows from ‖y‖^m |D^n f(y)| ≤ C for y = x - a
-   using the triangle inequality ‖x‖ ≤ ‖x-a‖ + ‖a‖ and taking m large enough
-
-**Reference:** Stein-Weiss, "Fourier Analysis", Chapter 1; any Schwartz space text
--/
-
-@[deprecated (since := "now")]
-alias SchwartzMap.translate := SchwartzMap.compSubConstCLM
-
-@[deprecated (since := "now")]
-alias SchwartzMap.translate_apply := SchwartzMap.compSubConstCLM_apply
 
 /-! ### Schwartz Integrable Decay
 
