@@ -87,14 +87,6 @@ theorem integral_const_mul {α} [MeasurableSpace α] (μ : Measure α) (c : ℝ)
   Integrable (fun x => c * f x) μ := by
   exact MeasureTheory.Integrable.const_mul hf c
 
-/-- Helper theorem: Integral of a real constant multiple pulls out of the integral. -/
-theorem integral_const_mul_eq {α} [MeasurableSpace α] (μ : Measure α) (c : ℝ)
-  (f : α → ℝ) (hf : Integrable f μ) :
-  ∫ x, c * f x ∂ μ = c * ∫ x, f x ∂ μ := by
-  -- The integrability assumption ensures both integrals are well-defined
-  have := hf  -- Acknowledge we need integrability for the integral to be well-defined
-  exact MeasureTheory.integral_const_mul c f
-
 /-- Helper theorem: Monotonicity of the real integral for pointwise ≤ between nonnegative functions,
     assuming the larger one is integrable. -/
 theorem real_integral_mono_of_le

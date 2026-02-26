@@ -214,83 +214,36 @@ lemma iteratedFDeriv_ofReal_norm_eq (f : TestFunction) (n : ℕ) (x : SpaceTime)
   rw [ContinuousLinearMap.iteratedFDeriv_comp_left Complex.ofRealCLM hf_at (le_refl _)]
   exact norm_compContinuousMultilinearMap_ofReal (iteratedFDeriv ℝ n f.toFun x)
 
-/-- Embed a real test function as a complex-valued test function by coercing values via ℝ → ℂ. -/
-def toComplex (f : TestFunction) : TestFunctionℂ :=
-  SchwartzMap.mk (fun x => (f x : ℂ)) (by
-    -- ℝ → ℂ coercion is smooth
-    exact ContDiff.comp Complex.ofRealCLM.contDiff f.smooth'
-  ) (by
-    -- Polynomial growth is preserved since ℝ → ℂ coercion preserves norms
-    intro k n
-    obtain ⟨C, hC⟩ := f.decay' k n
-    use C
-    intro x
-    -- Use the fact that iteratedFDeriv commutes with continuous linear maps
-    rw [iteratedFDeriv_ofReal_norm_eq]
-    exact hC x
-  )
+def toComplex (f : TestFunction) := f.postcompCLM Complex.ofRealCLM
 
-@[simp] lemma toComplex_apply (f : TestFunction) (x : SpaceTime) :
-  toComplex f x = (f x : ℂ) := by
-  -- Follows from definition of toComplex
-  rfl
+@[simp]
+theorem toComplex_apply (f : TestFunction) (x : SpaceTime) : toComplex f x = f x := rfl
 
 @[simp] lemma complex_testfunction_decompose_toComplex_fst (f : TestFunction) :
-  (complex_testfunction_decompose (toComplex f)).1 = f := by
+  (complex_testfunction_decompose (f.postcompCLM Complex.ofRealCLM)).1 = f := by
   ext x
-  simp [complex_testfunction_decompose, toComplex_apply]
+  simp [complex_testfunction_decompose]
 
 @[simp] lemma complex_testfunction_decompose_toComplex_snd (f : TestFunction) :
-  (complex_testfunction_decompose (toComplex f)).2 = 0 := by
+  (complex_testfunction_decompose (f.postcompCLM Complex.ofRealCLM)).2 = 0 := by
   ext x
-  simp [complex_testfunction_decompose, toComplex_apply]
+  simp [complex_testfunction_decompose]
 
-@[simp] lemma toComplex_add (f g : TestFunction) :
-  toComplex (f + g) = toComplex f + toComplex g := by
-  ext x
-  simp [toComplex_apply]
+def toComplexCLM := SchwartzMap.postcompCLM (E := SpaceTime) Complex.ofRealCLM
 
-@[simp] lemma toComplex_smul (c : ℝ) (f : TestFunction) :
-  toComplex (c • f) = (c : ℂ) • toComplex f := by
-  ext x
-  simp [toComplex_apply]
-
-/-- The embedding of real Schwartz functions into complex Schwartz functions is a continuous
-    ℝ-linear map. This follows from `SchwartzMap.mkCLM` since:
-    1. The map is linear (toComplex_add, toComplex_smul)
-    2. The composition with ofRealCLM is smooth
-    3. Derivative norms are preserved (iteratedFDeriv_ofReal_norm_eq)
-    so the Schwartz seminorm bounds are satisfied. -/
-noncomputable def toComplexCLM : TestFunction →L[ℝ] TestFunctionℂ :=
-  SchwartzMap.mkCLM (𝕜 := ℝ) (𝕜' := ℝ) (σ := RingHom.id ℝ) (fun f x => (f x : ℂ))
-    (fun f g x => by simp only [SchwartzMap.add_apply]; exact Complex.ofReal_add _ _)
-    (fun c f x => by
-      simp only [SchwartzMap.smul_apply, RingHom.id_apply]
-      rw [Complex.real_smul]
-      exact Complex.ofReal_mul c (f x))
-    (fun f => ContDiff.comp Complex.ofRealCLM.contDiff f.smooth')
-    (fun ⟨k, n⟩ => by
-      use {(k, n)}, 1, zero_le_one
-      intro f x
-      simp only [Finset.sup_singleton, one_mul]
-      rw [iteratedFDeriv_ofReal_norm_eq]
-      exact SchwartzMap.le_seminorm ℝ k n f x)
-
-@[simp] lemma toComplexCLM_apply (f : TestFunction) :
-    toComplexCLM f = toComplex f := by
-  ext x
-  rfl
+@[simp]
+theorem toComplexCLM_apply (f : TestFunction) : toComplexCLM f = toComplex f := rfl
 
 @[simp] lemma distributionPairingℂ_real_toComplex
   (ω : FieldConfiguration) (f : TestFunction) :
-  distributionPairingℂ_real ω (toComplex f) = ω f := by
+  distributionPairingℂ_real ω (f.postcompCLM Complex.ofRealCLM) = ω f := by
   simp [distributionPairingℂ_real]
 
 variable (dμ_config : ProbabilityMeasure FieldConfiguration)
 
 @[simp] lemma GJGeneratingFunctionalℂ_toComplex
   (f : TestFunction) :
-  GJGeneratingFunctionalℂ dμ_config (toComplex f) = GJGeneratingFunctional dμ_config f := by
+  GJGeneratingFunctionalℂ dμ_config (f.postcompCLM Complex.ofRealCLM) = GJGeneratingFunctional dμ_config f := by
   unfold GJGeneratingFunctionalℂ GJGeneratingFunctional
   simp [distributionPairingℂ_real_toComplex]
 
@@ -305,36 +258,8 @@ conjugation is a continuous ℝ-linear map on ℂ. -/
 
     This is defined using the continuous ℝ-linear equivalence `Complex.conjCLE : ℂ ≃L[ℝ] ℂ`.
     Since conjugation is smooth and an isometry, it preserves all Schwartz seminorms. -/
-noncomputable def conjSchwartz {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-    (f : SchwartzMap E ℂ) : SchwartzMap E ℂ := {
-  toFun := fun x => starRingEnd ℂ (f x)
-  smooth' := Complex.conjCLE.contDiff.comp (f.smooth ⊤)
-  decay' := fun k n => by
-    obtain ⟨C, hC⟩ := f.decay' k n
-    use C
-    intro x
-    -- ‖x‖^k * ‖iteratedFDeriv ℝ n (conj ∘ f) x‖ ≤ C
-    -- The key is that Complex.conjCLE is an isometry, so it preserves norms
-    have h_deriv : iteratedFDeriv ℝ n (fun x => starRingEnd ℂ (f x)) x =
-        (Complex.conjCLE : ℂ →L[ℝ] ℂ).compContinuousMultilinearMap (iteratedFDeriv ℝ n f x) := by
-      have hf : ContDiffAt ℝ (⊤ : ℕ∞) f x := (f.smooth ⊤).contDiffAt
-      have := ContinuousLinearMap.iteratedFDeriv_comp_left (x := x) (Complex.conjCLE : ℂ →L[ℝ] ℂ)
-          hf (i := n) (by norm_cast; exact le_top)
-      simp only [Function.comp_def] at this
-      exact this
-    rw [h_deriv]
-    have h_norm : ‖(Complex.conjCLE : ℂ →L[ℝ] ℂ).compContinuousMultilinearMap (iteratedFDeriv ℝ n f x)‖ ≤
-        ‖iteratedFDeriv ℝ n f x‖ := by
-      calc ‖(Complex.conjCLE : ℂ →L[ℝ] ℂ).compContinuousMultilinearMap (iteratedFDeriv ℝ n f x)‖
-          ≤ ‖(Complex.conjCLE : ℂ →L[ℝ] ℂ)‖ * ‖iteratedFDeriv ℝ n f x‖ :=
-            ContinuousLinearMap.norm_compContinuousMultilinearMap_le _ _
-        _ = 1 * ‖iteratedFDeriv ℝ n f x‖ := by rw [Complex.conjCLE_norm]
-        _ = ‖iteratedFDeriv ℝ n f x‖ := one_mul _
-    calc ‖x‖ ^ k * ‖(Complex.conjCLE : ℂ →L[ℝ] ℂ).compContinuousMultilinearMap (iteratedFDeriv ℝ n f x)‖
-        ≤ ‖x‖ ^ k * ‖iteratedFDeriv ℝ n f x‖ := by
-          apply mul_le_mul_of_nonneg_left h_norm (pow_nonneg (norm_nonneg _) _)
-      _ ≤ C := hC x
-}
+def conjSchwartz {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    (f : SchwartzMap E ℂ) : SchwartzMap E ℂ := f.postcompCLM Complex.conjCLE.toContinuousLinearMap
 
 @[simp] lemma conjSchwartz_apply {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
     (f : SchwartzMap E ℂ) (x : E) :

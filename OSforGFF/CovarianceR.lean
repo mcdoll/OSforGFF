@@ -88,7 +88,7 @@ noncomputable def schwartzToL2CLM_real (_m : ℝ) :
     Conceptually: T f = FourierTransform(f) * (‖k‖² + m²)^(-1/2). -/
 noncomputable def sqrtPropagatorMap (m : ℝ) (f : TestFunction) : SpaceTime → ℂ :=
   fun k =>
-    (SchwartzMap.fourierTransformCLM ℂ (toComplex f)) k
+    (SchwartzMap.fourierTransformCLM ℂ (f.postcompCLM Complex.ofRealCLM)) k
       * momentumWeightSqrt_mathlib m k
 
 /-- The sqrtPropagatorMap is square-integrable. -/
@@ -173,15 +173,13 @@ lemma sqrtPropagatorMap_linear_add (m : ℝ) [Fact (0 < m)] (f g : TestFunction)
     sqrtPropagatorMap m (f + g) = sqrtPropagatorMap m f + sqrtPropagatorMap m g := by
   ext k
   unfold sqrtPropagatorMap
-  rw [toComplex_add, map_add]
-  simp [add_mul]
+  simp [map_add, add_mul]
 
 /-- The map is ℝ-linear (scalar multiplication). -/
 lemma sqrtPropagatorMap_linear_smul (m : ℝ) [Fact (0 < m)] (c : ℝ) (f : TestFunction) :
     sqrtPropagatorMap m (c • f) = c • sqrtPropagatorMap m f := by
   ext k
   unfold sqrtPropagatorMap
-  rw [toComplex_smul, ContinuousLinearMap.map_smul]
   simp [mul_comm, mul_left_comm]
 
 /-! ## Connection to Covariance -/
@@ -327,7 +325,7 @@ lemma embeddingMapCLM_apply (m : ℝ) [Fact (0 < m)] (f : TestFunction) :
       =ᵐ[volume] sqrtPropagatorMap m f := by
     refine Filter.Eventually.of_forall ?_
     intro k
-    simp [sqrtPropagatorMap, g, mul_comm]
+    simp [sqrtPropagatorMap, g, mul_comm, toComplex]
   have h_mem := sqrtPropagatorMap_memLp (m := m) (f := f)
   have h_lp : embeddingMap m f =ᵐ[volume] sqrtPropagatorMap m f := by
     simpa [embeddingMap] using h_mem.coeFn_toLp
@@ -494,7 +492,7 @@ lemma freeCovarianceFormR_add_left (m : ℝ) [Fact (0 < m)] (f₁ f₂ g : TestF
   have hL :
       (freeCovarianceFormR m (f₁ + f₂) g : ℂ)
         = freeCovarianceℂ_bilinear m (toComplex f₁ + toComplex f₂) (toComplex g) := by
-    simpa [toComplex_add]
+    simpa [toComplex]
       using (freeCovarianceℂ_bilinear_agrees_on_reals m (f₁ + f₂) g).symm
   have h' :
       (freeCovarianceFormR m (f₁ + f₂) g : ℂ)
@@ -518,7 +516,7 @@ lemma freeCovarianceFormR_smul_left (m : ℝ) [Fact (0 < m)] (c : ℝ) (f g : Te
   have hL :
       (freeCovarianceFormR m (c • f) g : ℂ)
         = freeCovarianceℂ_bilinear m ((c : ℂ) • toComplex f) (toComplex g) := by
-    simpa [toComplex_apply]
+    simpa [toComplex]
       using (freeCovarianceℂ_bilinear_agrees_on_reals m (c • f) g).symm
   have hR :
       (freeCovarianceFormR m f g : ℂ)
@@ -544,7 +542,7 @@ lemma freeCovarianceFormR_add_right (m : ℝ) [Fact (0 < m)] (f g₁ g₂ : Test
   have hL :
       (freeCovarianceFormR m f (g₁ + g₂) : ℂ)
         = freeCovarianceℂ_bilinear m (toComplex f) (toComplex g₁ + toComplex g₂) := by
-    simpa [toComplex_add]
+    simpa [toComplex]
       using (freeCovarianceℂ_bilinear_agrees_on_reals m f (g₁ + g₂)).symm
   have h' :
       (freeCovarianceFormR m f (g₁ + g₂) : ℂ)
@@ -568,7 +566,7 @@ lemma freeCovarianceFormR_smul_right (m : ℝ) [Fact (0 < m)] (c : ℝ) (f g : T
   have hL :
     (freeCovarianceFormR m f (c • g) : ℂ)
         = freeCovarianceℂ_bilinear m (toComplex f) ((c : ℂ) • toComplex g) := by
-    simpa [toComplex_apply]
+    simpa [toComplex]
       using (freeCovarianceℂ_bilinear_agrees_on_reals m f (c • g)).symm
   have hR :
       (freeCovarianceFormR m f g : ℂ)

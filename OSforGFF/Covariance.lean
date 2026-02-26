@@ -224,9 +224,8 @@ lemma integrable_compTimeReflection_covariance
     they agree pointwise as complex values. -/
 lemma compTimeReflection_toComplex_eq_ofReal
   (f : TestFunction) (x : SpaceTime) :
-  (QFT.compTimeReflection (toComplex f)) x = ((QFT.compTimeReflectionReal f) x : ℂ) := by
-  simp only [QFT.compTimeReflection, QFT.compTimeReflectionReal,
-    SchwartzMap.compCLM_apply, Function.comp_apply, toComplex_apply]
+  (QFT.compTimeReflection (f.postcompCLM Complex.ofRealCLM)) x = ((QFT.compTimeReflectionReal f) x : ℂ) := by
+  simp [QFT.compTimeReflection, QFT.compTimeReflectionReal]
 
 /-- The real part of a complex integral of a real-valued function equals the real integral.
     This uses `integral_ofReal_eq` and `Complex.ofReal_re`. -/
@@ -243,16 +242,16 @@ lemma integrable_real_covariance_kernel
       (QFT.compTimeReflectionReal f) p.1 * freeCovariance m p.1 p.2 * f p.2)
     (volume.prod volume) := by
   -- Get integrability from complex axiom
-  have h_complex := integrable_compTimeReflection_covariance m (toComplex f)
+  have h_complex := integrable_compTimeReflection_covariance m (f.postcompCLM Complex.ofRealCLM)
   -- Show the integrands match (after casting)
   -- The complex integrand with toComplex f equals the real integrand cast to ℂ
   have h_eq : (fun p : SpaceTime × SpaceTime =>
-      (QFT.compTimeReflection (toComplex f)) p.1 * (freeCovariance m p.1 p.2 : ℂ)
-          * (toComplex f) p.2)
+      (QFT.compTimeReflection (f.postcompCLM Complex.ofRealCLM)) p.1 * (freeCovariance m p.1 p.2 : ℂ)
+          * (f.postcompCLM Complex.ofRealCLM) p.2)
       = (fun p => (((QFT.compTimeReflectionReal f) p.1 : ℂ) * ((freeCovariance m p.1 p.2 : ℝ) : ℂ)
           * ((f p.2 : ℝ) : ℂ))) := by
     ext p
-    simp only [compTimeReflection_toComplex_eq_ofReal, toComplex_apply]
+    simp only [compTimeReflection_toComplex_eq_ofReal, SchwartzMap.postcompCLM_apply, ofRealCLM_apply]
   rw [h_eq] at h_complex
   -- h_complex has distributed casts: ↑a * ↑b * ↑c
   -- We need integrability of the real function a * b * c
@@ -295,14 +294,14 @@ lemma integral_prod_real_covariance_kernel
 lemma integral_prod_complex_covariance_kernel
   (m : ℝ) [Fact (0 < m)] (f : TestFunction) :
   ∫ p : SpaceTime × SpaceTime,
-      (QFT.compTimeReflection (toComplex f)) p.1 * (freeCovariance m p.1 p.2 : ℂ)
-          * (toComplex f) p.2 ∂(volume.prod volume)
+      (QFT.compTimeReflection (f.postcompCLM Complex.ofRealCLM)) p.1 * (freeCovariance m p.1 p.2 : ℂ)
+          * (f.postcompCLM Complex.ofRealCLM) p.2 ∂(volume.prod volume)
     =
       ∫ x, ∫ y,
-        (QFT.compTimeReflection (toComplex f)) x * (freeCovariance m x y : ℂ)
-          * (toComplex f) y ∂volume ∂volume := by
+        (QFT.compTimeReflection (f.postcompCLM Complex.ofRealCLM)) x * (freeCovariance m x y : ℂ)
+          * (f.postcompCLM Complex.ofRealCLM) y ∂volume ∂volume := by
   rw [MeasureTheory.integral_prod]
-  exact integrable_compTimeReflection_covariance m (toComplex f)
+  exact integrable_compTimeReflection_covariance m (f.postcompCLM Complex.ofRealCLM)
 
 /-- ** (Real-Complex Integral Correspondence):**
   The real integral with compTimeReflectionReal equals the real part of the
@@ -315,22 +314,22 @@ lemma integral_prod_complex_covariance_kernel
 lemma real_integral_eq_complex_re
   (m : ℝ) [Fact (0 < m)] (f : TestFunction) :
   ∫ x, ∫ y, (QFT.compTimeReflectionReal f) x * freeCovariance m x y * f y ∂volume ∂volume
-    = (∫ x, ∫ y, (QFT.compTimeReflection (toComplex f)) x * (freeCovariance m x y : ℂ)
-        * (toComplex f) y ∂volume ∂volume).re := by
+    = (∫ x, ∫ y, (QFT.compTimeReflection (f.postcompCLM Complex.ofRealCLM)) x * (freeCovariance m x y : ℂ)
+        * (f.postcompCLM Complex.ofRealCLM) y ∂volume ∂volume).re := by
   -- Key: The complex integrand equals ofReal of the real product
-  have h_eq : ∀ x y, (QFT.compTimeReflection (toComplex f)) x * (freeCovariance m x y : ℂ)
-        * (toComplex f) y
+  have h_eq : ∀ x y, (QFT.compTimeReflection (f.postcompCLM Complex.ofRealCLM)) x * (freeCovariance m x y : ℂ)
+        * (f.postcompCLM Complex.ofRealCLM) y
       = ((QFT.compTimeReflectionReal f) x * freeCovariance m x y * f y : ℂ) := by
     intro x y
-    simp only [compTimeReflection_toComplex_eq_ofReal, toComplex_apply]
+    simp only [compTimeReflection_toComplex_eq_ofReal, SchwartzMap.postcompCLM_apply, ofRealCLM_apply]
   -- Strategy: use Fubini to convert to product measure, apply re_integral_ofReal, convert back
   -- First rewrite RHS using Fubini for complex (before h_eq rewrite)
   rw [← integral_prod_complex_covariance_kernel m f]
   -- Now RHS is (∫ p, complex_integrand(p)).re
   -- Rewrite the complex integrand using h_eq
   have h_eq_prod : ∀ p : SpaceTime × SpaceTime,
-      (QFT.compTimeReflection (toComplex f)) p.1 * (freeCovariance m p.1 p.2 : ℂ)
-          * (toComplex f) p.2
+      (QFT.compTimeReflection (f.postcompCLM Complex.ofRealCLM)) p.1 * (freeCovariance m p.1 p.2 : ℂ)
+          * (f.postcompCLM Complex.ofRealCLM) p.2
       = ((QFT.compTimeReflectionReal f) p.1 * freeCovariance m p.1 p.2 * f p.2 : ℂ) := by
     intro p
     exact h_eq p.1 p.2
@@ -352,17 +351,14 @@ lemma real_integral_eq_complex_re
   This allows us to match the Parseval identity which uses starRingEnd. -/
 lemma toComplex_star_eq
   (f : TestFunction) (x : SpaceTime) :
-  starRingEnd ℂ ((toComplex f) x) = (toComplex f) x := by
-  -- toComplex f x = (f x : ℂ) by definition
-  simp only [toComplex_apply]
-  -- The conjugate of a real number (lifted to ℂ) is itself
-  exact Complex.conj_ofReal (f x)
+  starRingEnd ℂ ((f.postcompCLM Complex.ofRealCLM) x) = (f.postcompCLM Complex.ofRealCLM) x := by
+  simp
 
 /-- The time-reflected complexification of a real test function remains real-valued. -/
 lemma compTimeReflection_toComplex_star_eq
   (f : TestFunction) (x : SpaceTime) :
-  starRingEnd ℂ ((QFT.compTimeReflection (toComplex f)) x)
-    = (QFT.compTimeReflection (toComplex f)) x := by
+  starRingEnd ℂ ((QFT.compTimeReflection (f.postcompCLM Complex.ofRealCLM)) x)
+    = (QFT.compTimeReflection (f.postcompCLM Complex.ofRealCLM)) x := by
   -- compTimeReflection is composition with timeReflectionCLM
   simp only [QFT.compTimeReflection, SchwartzMap.compCLM_apply, Function.comp_apply]
   -- Now we have (toComplex f) (QFT.timeReflectionCLM x)

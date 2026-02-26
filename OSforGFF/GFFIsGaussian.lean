@@ -216,7 +216,7 @@ lemma gff_cf_agrees_on_reals_OS0 (f g : TestFunction) (t s : ℝ) :
     simp [toComplex_apply]
   rw [h_eq_test]
   -- GJGeneratingFunctionalℂ on a real test function equals GJGeneratingFunctional
-  rw [GJGeneratingFunctionalℂ_toComplex, h]
+  rw [toComplex, GJGeneratingFunctionalℂ_toComplex, h]
 
 /-- Complex generating functional for the free GFF via OS0 + identity theorem.
     This proves the result WITHOUT using twoD_line_from_realCF. -/
@@ -429,7 +429,7 @@ lemma schwinger_eq_covarianceℂ_on_reals (f g : TestFunction) :
       freeCovarianceℂ_bilinear m (toComplex f) (toComplex g) := by
   -- Use distributionPairingℂ_real_toComplex to reduce to real pairings
   simp only [SchwingerFunctionℂ₂, SchwingerFunctionℂ, Fin.prod_univ_two,
-    Matrix.cons_val_zero, Matrix.cons_val_one,
+    Matrix.cons_val_zero, Matrix.cons_val_one, toComplex,
     distributionPairingℂ_real_toComplex]
   -- Now we have: ∫ ω, ↑(ω f) * ↑(ω g) dμ = freeCovarianceℂ_bilinear m (toComplex f) (toComplex g)
   -- Step 1: Rewrite ↑a * ↑b = ↑(a * b) pointwise using ofReal_mul

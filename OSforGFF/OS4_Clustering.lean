@@ -217,7 +217,8 @@ lemma GFF_OS4_from_small_decay_real (m : ℝ) [Fact (0 < m)]
     (GJGeneratingFunctionalℂ_toComplex (gaussianFreeField_free m) g).symm
   have h_eq_sum : GJGeneratingFunctional (gaussianFreeField_free m) (f + g.compSubConstCLM ℝ a) =
                   GJGeneratingFunctionalℂ (gaussianFreeField_free m) (fC + T_a_gC) := by
-    rw [← GJGeneratingFunctionalℂ_toComplex, toComplex_add]
+    rw [← GJGeneratingFunctionalℂ_toComplex]
+    simp [toComplex, fC, T_a_gC]
 
   -- Rewrite in terms of complex generating functional
   rw [h_eq_f, h_eq_g, h_eq_sum]
@@ -277,7 +278,7 @@ lemma GFF_OS4_from_small_decay_real (m : ℝ) [Fact (0 < m)]
       ext ω
       -- fC = toComplex f and T_a_gC = toComplex (g.compSubConstCLM ℝ a)
       show distributionPairingℂ_real ω (toComplex f) * distributionPairingℂ_real ω (toComplex (g.compSubConstCLM ℝ a)) = _
-      rw [distributionPairingℂ_real_toComplex, distributionPairingℂ_real_toComplex, Complex.ofReal_mul]
+      simp [toComplex]
     rw [h_fun_eq]
     -- Now the goal is: ∫ ↑(f(ω) * g(ω)) dμ = ↑(∫ f(ω) * g(ω) dμ)
     -- Need integrability for integral_ofReal_eq

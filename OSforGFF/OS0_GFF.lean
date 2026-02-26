@@ -156,9 +156,9 @@ theorem distributionPairingℂ_real_continuous (f : TestFunctionℂ) :
   simp only [distributionPairingℂ_real, complex_testfunction_decompose]
   -- Now we need: Continuous (ω ↦ ↑(ω (schwartz_comp_clm f reCLM)) + I * ↑(ω (schwartz_comp_clm f imCLM)))
   -- Each evaluation ω ↦ ω g is continuous by WeakDual.eval_continuous
-  have h_re : Continuous (fun ω : FieldConfiguration => (ω (schwartz_comp_clm f Complex.reCLM) : ℂ)) :=
+  have h_re : Continuous (fun ω : FieldConfiguration => (ω (f.postcompCLM Complex.reCLM) : ℂ)) :=
     Complex.continuous_ofReal.comp (WeakDual.eval_continuous _)
-  have h_im : Continuous (fun ω : FieldConfiguration => (ω (schwartz_comp_clm f Complex.imCLM) : ℂ)) :=
+  have h_im : Continuous (fun ω : FieldConfiguration => (ω (f.postcompCLM Complex.imCLM) : ℂ)) :=
     Complex.continuous_ofReal.comp (WeakDual.eval_continuous _)
   -- The full pairing is a continuous combination
   exact h_re.add (continuous_const.mul h_im)
@@ -807,12 +807,12 @@ theorem gff_integrand_fderiv_bound (n : ℕ) (J : Fin n → TestFunctionℂ) (z�
           simp only [distributionPairingℂ_real, φRe, φIm, complex_testfunction_decompose]
           -- The goal is ‖‖...‖‖ ≤ |...| + |...|, but ‖x‖ = |x| for x : ℝ≥0
           rw [Real.norm_eq_abs, abs_norm]
-          calc ‖(↑(ω (schwartz_comp_clm (J i) Complex.reCLM)) : ℂ) +
-                  Complex.I * ↑(ω (schwartz_comp_clm (J i) Complex.imCLM))‖
-              ≤ ‖(↑(ω (schwartz_comp_clm (J i) Complex.reCLM)) : ℂ)‖ +
-                ‖Complex.I * ↑(ω (schwartz_comp_clm (J i) Complex.imCLM))‖ := norm_add_le _ _
-            _ = |ω (schwartz_comp_clm (J i) Complex.reCLM)| +
-                |ω (schwartz_comp_clm (J i) Complex.imCLM)| := by
+          calc ‖(↑(ω ((J i).postcompCLM Complex.reCLM)) : ℂ) +
+                  Complex.I * ↑(ω ((J i).postcompCLM Complex.imCLM))‖
+              ≤ ‖(↑(ω ((J i).postcompCLM Complex.reCLM)) : ℂ)‖ +
+                ‖Complex.I * ↑(ω ((J i).postcompCLM Complex.imCLM))‖ := norm_add_le _ _
+            _ = |ω ((J i).postcompCLM Complex.reCLM)| +
+                |ω ((J i).postcompCLM Complex.imCLM)| := by
                 simp [Complex.norm_real, Complex.norm_I]
       exact h_const.add h_sum
 

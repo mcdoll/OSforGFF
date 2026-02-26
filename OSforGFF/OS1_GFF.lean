@@ -399,8 +399,7 @@ lemma covariance_imaginary_L2_bound (m : ℝ) [Fact (0 < m)] (f : TestFunction�
         (1 / m^2) * ∫ k, ‖F k‖^2 ∂volume := by
     have h_const_pull : ∫ k, (1 / m^2) * ‖F k‖^2 ∂volume
         = (1 / m^2) * ∫ k, ‖F k‖^2 ∂volume :=
-      integral_const_mul_eq (μ := volume) (c := (1 / m^2))
-        (f := fun k => ‖F k‖^2) hF_sq_int
+      MeasureTheory.integral_const_mul (1 / m ^ 2) fun a ↦ ‖F a‖ ^ 2
     calc
       ∫ k, ‖F k‖^2 * freePropagatorMomentum_mathlib m k ∂volume
           ≤ ∫ k, (1 / m^2) * ‖F k‖^2 ∂volume := h_int_le
