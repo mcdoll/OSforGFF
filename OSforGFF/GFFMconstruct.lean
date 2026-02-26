@@ -208,8 +208,7 @@ theorem gff_real_characteristic (m : ℝ) [Fact (0 < m)] :
   -- By definition, gaussianFreeField_free chooses the same ProbabilityMeasure
   -- returned by gaussian_measure_characteristic_functional
   simpa [gaussianFreeField_free, constructGaussianMeasureMinlos_free,
-        GJGeneratingFunctional, gaussian_characteristic_functional,
-        distributionPairing]
+        GJGeneratingFunctional, gaussian_characteristic_functional]
     using (hchar f)
 
 /-! ### Characteristic Function Bridge
@@ -246,7 +245,7 @@ private lemma charFun_eq_GJGeneratingFunctional
   simp only [distributionPairingCLM, ContinuousLinearMap.coe_mk', real_inner_comm]
   rw [mul_comm _ I]
   congr 1
-  simp [distributionPairing]
+  simp
   ring
 
 /-- For the GFF measure, the pushforward by `distributionPairingCLM φ` has
@@ -292,7 +291,7 @@ theorem gff_pairing_is_gaussian
     This theorem was formerly an axiom, now proven via the characteristic function bridge. -/
 theorem gaussianFreeField_pairing_memLp
   (m : ℝ) [Fact (0 < m)] (φ : TestFunction) (p : ENNReal) (hp : p ≠ ⊤) :
-  MemLp (distributionPairingCLM φ) p (gaussianFreeField_free m).toMeasure := by
+  MemLp (· φ) p (gaussianFreeField_free m).toMeasure := by
   -- The pushforward measure is a 1D Gaussian
   have h_gauss := gff_pairing_is_gaussian m φ
   -- Convert to use the fact that id is memLp for the Gaussian
@@ -308,7 +307,7 @@ theorem gaussianFreeField_pairing_memLp
     and Gaussian measures have finite moments of all orders. -/
 lemma gff_pairing_square_integrable
   (m : ℝ) [Fact (0 < m)] (φ : TestFunction) :
-  Integrable (fun ω => (distributionPairingCLM φ ω)^2) (gaussianFreeField_free m).toMeasure := by
+  Integrable (fun ω => (ω φ)^2) (gaussianFreeField_free m).toMeasure := by
   -- The pushforward measure is Gaussian
   have h_gauss := gff_pairing_is_gaussian m φ
   -- For a Gaussian measure, id is in L²
@@ -392,7 +391,7 @@ theorem gaussianFreeField_free_centered (m : ℝ) [Fact (0 < m)] :
         = Complex.exp (-(1/2 : ℂ) * ((freeCovarianceForm m).Q f f)) := by
     intro f
     have h := gff_real_characteristic m f
-    simp only [GJGeneratingFunctional, distributionPairing] at h
+    simp only [GJGeneratingFunctional] at h
     exact h
   -- Step 2: Get integrability from gaussianFreeField_pairing_memLp
   have hInt : Integrable (fun ω => (ω φ : ℂ)) (gaussianFreeField_free m).toMeasure := by
@@ -451,7 +450,7 @@ theorem gaussianFreeField_pairing_expSq_integrable
     establishing two-point integrability. -/
 lemma gaussian_pairing_square_integrable_real
     (m : ℝ) [Fact (0 < m)] (φ : TestFunction) :
-  Integrable (fun ω => (distributionPairing ω φ) ^ 2)
+  Integrable (fun ω => (ω φ) ^ 2)
     (gaussianFreeField_free m).toMeasure := by
   -- Option B: invoke the Fernique-type axiom giving Lᵖ moments for the pairing
   have h_memLp :=

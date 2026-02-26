@@ -109,8 +109,6 @@ theorem schwingerTwoPointFunction_eq_GFF (m : ℝ) [Fact (0 < m)] (x : SpaceTime
     intro f g
     -- Step 1: S₂ = ∫ω (ωf)(ωg) via schwinger_eq_covariance
     rw [schwinger_eq_covariance]
-    -- Unfold distributionPairing to ω f
-    simp only [distributionPairing]
     -- Step 2: For GFF, ∫ω (ωf)(ωg) = freeCovarianceFormR via schwinger_eq_covariance_real
     rw [GFFIsGaussian.schwinger_eq_covariance_real m f g]
     -- Step 3: freeCovarianceFormR = ∫∫ f(u) * freeCovariance(u,v) * g(v)

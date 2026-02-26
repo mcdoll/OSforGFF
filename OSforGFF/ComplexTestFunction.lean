@@ -283,8 +283,8 @@ noncomputable def toComplexCLM : TestFunction →L[ℝ] TestFunctionℂ :=
 
 @[simp] lemma distributionPairingℂ_real_toComplex
   (ω : FieldConfiguration) (f : TestFunction) :
-  distributionPairingℂ_real ω (toComplex f) = distributionPairing ω f := by
-  simp [distributionPairingℂ_real, distributionPairing]
+  distributionPairingℂ_real ω (toComplex f) = ω f := by
+  simp [distributionPairingℂ_real]
 
 variable (dμ_config : ProbabilityMeasure FieldConfiguration)
 

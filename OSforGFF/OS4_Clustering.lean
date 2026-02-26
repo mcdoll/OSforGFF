@@ -266,14 +266,14 @@ lemma GFF_OS4_from_small_decay_real (m : ℝ) [Fact (0 < m)]
     show SchwingerFunctionℂ₂ (gaussianFreeField_free m) fC T_a_gC = _
     -- Use the definitions directly:
     -- SchwingerFunctionℂ₂ = ∫ (distributionPairingℂ_real ω f) * (distributionPairingℂ_real ω g) dμ
-    -- For toComplex of real f, distributionPairingℂ_real ω (toComplex f) = ↑(distributionPairing ω f)
-    -- SchwingerFunction₂ = ∫ (distributionPairing ω f) * (distributionPairing ω g) dμ
+    -- For toComplex of real f, distributionPairingℂ_real ω (toComplex f) = ↑(ω f)
+    -- SchwingerFunction₂ = ∫ (ω f) * (ω g) dμ
     -- Both integrals agree: ∫ ↑(a * b) dμ = ↑(∫ a * b dμ) when integrable
     simp only [SchwingerFunctionℂ₂, SchwingerFunctionℂ, SchwingerFunction₂, SchwingerFunction,
                Fin.prod_univ_two, Matrix.cons_val_zero, Matrix.cons_val_one]
     -- Convert the integral of complex products to integral of real products cast to ℂ
     have h_fun_eq : (fun ω => distributionPairingℂ_real ω fC * distributionPairingℂ_real ω T_a_gC) =
-        (fun x => (↑(distributionPairing x f * distributionPairing x (g.compSubConstCLM ℝ a)) : ℂ)) := by
+        (fun x : FieldConfiguration => (↑(x f * x (g.compSubConstCLM ℝ a)) : ℂ)) := by
       ext ω
       -- fC = toComplex f and T_a_gC = toComplex (g.compSubConstCLM ℝ a)
       show distributionPairingℂ_real ω (toComplex f) * distributionPairingℂ_real ω (toComplex (g.compSubConstCLM ℝ a)) = _
@@ -282,12 +282,12 @@ lemma GFF_OS4_from_small_decay_real (m : ℝ) [Fact (0 < m)]
     -- Now the goal is: ∫ ↑(f(ω) * g(ω)) dμ = ↑(∫ f(ω) * g(ω) dμ)
     -- Need integrability for integral_ofReal_eq
     have h_int : MeasureTheory.Integrable
-        (fun ω => distributionPairing ω f * distributionPairing ω (g.compSubConstCLM ℝ a))
+        (fun ω => ω f * ω (g.compSubConstCLM ℝ a))
         (gaussianFreeField_free m).toMeasure := by
       -- Use Hölder: L² × L² → L¹
-      have hf : MemLp (fun ω => distributionPairing ω f) 2 (gaussianFreeField_free m).toMeasure :=
+      have hf : MemLp (fun ω => ω f) 2 (gaussianFreeField_free m).toMeasure :=
         gaussianFreeField_pairing_memLp m f 2 (by simp)
-      have hg : MemLp (fun ω => distributionPairing ω (g.compSubConstCLM ℝ a)) 2 (gaussianFreeField_free m).toMeasure :=
+      have hg : MemLp (fun ω => ω (g.compSubConstCLM ℝ a)) 2 (gaussianFreeField_free m).toMeasure :=
         gaussianFreeField_pairing_memLp m (g.compSubConstCLM ℝ a) 2 (by simp)
       exact hf.integrable_mul hg
     exact integral_ofReal_eq (gaussianFreeField_free m).toMeasure _ h_int
@@ -416,7 +416,7 @@ theorem schwartz_cross_covariance_decay_real (m : ℝ) [Fact (0 < m)]
           (toComplex f) x * (freeCovarianceKernel m (x - y) : ℂ) * (toComplex g) (y - a)‖ := by
         -- Step 6a: SchwingerFunction₂ = ∫ ω, (ω f)(ω g') (by schwinger_eq_covariance)
         have h_schwinger1 : SchwingerFunction₂ (gaussianFreeField_free m) f (g.compSubConstCLM ℝ a)
-            = ∫ ω, (distributionPairing ω f) * (distributionPairing ω (g.compSubConstCLM ℝ a))
+            = ∫ ω, (ω f) * (ω (g.compSubConstCLM ℝ a))
               ∂(gaussianFreeField_free m).toMeasure :=
           schwinger_eq_covariance (gaussianFreeField_free m) f (g.compSubConstCLM ℝ a)
         -- Step 6b: ∫ ω, (ω f)(ω g') = freeCovarianceFormR (by schwinger_eq_covariance_real)
@@ -427,7 +427,6 @@ theorem schwartz_cross_covariance_decay_real (m : ℝ) [Fact (0 < m)]
         have h_schwinger : SchwingerFunction₂ (gaussianFreeField_free m) f (g.compSubConstCLM ℝ a)
             = freeCovarianceFormR m f (g.compSubConstCLM ℝ a) := by
           rw [h_schwinger1]
-          simp only [distributionPairing]
           exact h_schwinger2
         -- Step 6c: freeCovarianceFormR uses freeCovariance = freeCovarianceKernel (x - y)
         -- freeCovarianceFormR m f h = ∫∫ f(x) freeCovariance(x,y) h(y) dx dy

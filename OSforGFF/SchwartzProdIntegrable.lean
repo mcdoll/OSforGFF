@@ -146,7 +146,15 @@ abbrev SpatialCoords3 : Type := EuclideanSpace ℝ (Fin 3)
 
 /-- Decomposition of SpaceTime as time × space. -/
 noncomputable def spacetimeOfTimeSpace (t : ℝ) (x : SpatialCoords3) : SpaceTime :=
-  EuclideanSpace.equiv (Fin 4) ℝ |>.symm (Fin.cons t (fun i => x i))
+  EuclideanSpace.equiv (Fin 4) ℝ |>.symm (Fin.cons t x)
+
+@[simp]
+lemma spacetimeOfTimeSpace_sub (t : ℝ) (x y : SpatialCoords3) :
+    spacetimeOfTimeSpace t x - spacetimeOfTimeSpace t y = spacetimeOfTimeSpace 0 (x - y) := by
+  ext j
+  cases j using Fin.cases with
+  | zero => simp [spacetimeOfTimeSpace, EuclideanSpace.equiv, Fin.cons_zero]
+  | succ j => simp [spacetimeOfTimeSpace, EuclideanSpace.equiv, Fin.cons_succ]
 
 /-- The time coordinate of spacetimeOfTimeSpace is t. -/
 lemma spacetimeOfTimeSpace_time (t : ℝ) (x : SpatialCoords3) :
@@ -298,63 +306,28 @@ lemma continuous_spacetimeOfTimeSpace_right (t : ℝ) : Continuous (spacetimeOfT
     continuous_const.add spatialEmbedCLM.continuous
   exact (continuous_congr h_decompose).mpr h_cont
 
+lemma spacetimeOfTime_eq_spatialEmbedCLM_add (t : ℝ) :
+    spacetimeOfTimeSpace t = fun x ↦ spatialEmbedCLM x + spacetimeOfTimeSpace t 0 := by
+  ext1 x
+  simp only [spatialEmbedCLM, spatialEmbed, ContinuousLinearMap.coe_mk', LinearMap.coe_mk,
+    AddHom.coe_mk]
+  rw [add_comm]
+  apply spacetimeOfTimeSpace_decompose
+
+lemma spacetimeOfTimeSpace_antilipschitz (t : ℝ) :
+    AntilipschitzWith 1 (spacetimeOfTimeSpace t) := by
+  apply AntilipschitzWith.of_le_mul_dist
+  intro x y
+  simp only [NNReal.coe_one, one_mul, NormedAddCommGroup.dist_eq, spacetimeOfTimeSpace_sub]
+  exact spacetimeOfTimeSpace_norm_ge 0 _
+
 /-- A Schwartz function restricted to a fixed time slice is integrable over ℝ³.
     Uses decay transfer: 4D Schwartz decay implies 3D integrability via norm comparison. -/
 lemma schwartz_time_slice_integrable (f : TestFunctionℂ) (t : ℝ) :
     Integrable (fun x : SpatialCoords3 => f (spacetimeOfTimeSpace t x)) volume := by
-  -- Strategy: Show the function has rapid decay and use integrability of decay functions
-  --
-  -- Key facts:
-  -- 1. f is Schwartz, so |f(y)| ≤ C/(1 + ‖y‖)^N for any N
-  -- 2. spacetimeOfTimeSpace t x = (t, x₁, x₂, x₃), so ‖spacetimeOfTimeSpace t x‖² = t² + ‖x‖²
-  -- 3. For fixed t, ‖spacetimeOfTimeSpace t x‖ ≥ ‖x‖
-  -- 4. So |f(spacetimeOfTimeSpace t x)| ≤ C/(1 + ‖x‖)^N which is integrable on ℝ³ for N > 3
-  --
-  -- Use Schwartz decay bound from FunctionalAnalysis
-  have hST_dim : Module.finrank ℝ SpaceTime < 5 := by
-    simp only [SpaceTime, finrank_euclideanSpace, Fintype.card_fin]
-    norm_num
-  obtain ⟨C, hC_pos, hf_decay⟩ := schwartz_integrable_decay f 5 hST_dim
-  -- Note: SpatialCoords3 has dimension 3, and we need N > dim, so N = 5 > 3 works
-
-  -- The dominator function: x ↦ C / (1 + ‖x‖)^5
-  have h_dom_integrable : Integrable (fun x : SpatialCoords3 => C / (1 + ‖x‖)^5) volume := by
-    have h_dim : (Module.finrank ℝ SpatialCoords3 : ℝ) < 5 := by
-      simp only [finrank_euclideanSpace, Fintype.card_fin]
-      norm_num
-    have h_int := integrable_one_add_norm (E := SpatialCoords3) (μ := volume) (r := 5) h_dim
-    -- Convert between (1+‖x‖)^(-5:ℝ) and C/(1+‖x‖)^5
-    have h_eq : ∀ x : SpatialCoords3, C / (1 + ‖x‖) ^ 5 = C * (1 + ‖x‖) ^ (-(5 : ℝ)) := by
-      intro x
-      norm_cast
-    simp_rw [h_eq]
-    exact h_int.const_mul C
-
-  -- Pointwise bound: |f(spacetimeOfTimeSpace t x)| ≤ C/(1+‖spacetimeOfTimeSpace t x‖)^5 ≤ C/(1+‖x‖)^5
-  have h_bound : ∀ x : SpatialCoords3,
-      ‖f (spacetimeOfTimeSpace t x)‖ ≤ C / (1 + ‖x‖)^5 := by
-    intro x
-    -- Apply Schwartz decay
-    have h1 := hf_decay (spacetimeOfTimeSpace t x)
-    -- Need: 1 + ‖spacetimeOfTimeSpace t x‖ ≥ 1 + ‖x‖
-    -- This follows from ‖spacetimeOfTimeSpace t x‖ ≥ ‖x‖.
-    have h_norm_ge : ‖spacetimeOfTimeSpace t x‖ ≥ ‖x‖ :=
-      spacetimeOfTimeSpace_norm_ge t x
-    have h_bracket_ge : 1 + ‖spacetimeOfTimeSpace t x‖ ≥ 1 + ‖x‖ := by linarith
-    have h_bracket_pos : 0 < 1 + ‖x‖ := by positivity
-    have h_pow_le : (1 + ‖x‖)^5 ≤ (1 + ‖spacetimeOfTimeSpace t x‖)^5 := by
-      apply pow_le_pow_left₀ (by linarith [norm_nonneg x]) h_bracket_ge
-    calc ‖f (spacetimeOfTimeSpace t x)‖
-        ≤ C / (1 + ‖spacetimeOfTimeSpace t x‖)^5 := h1
-      _ ≤ C / (1 + ‖x‖)^5 := by
-          apply div_le_div_of_nonneg_left (le_of_lt hC_pos) (by positivity) h_pow_le
-
-  -- Apply Integrable.mono
-  apply Integrable.mono h_dom_integrable
-    (f.continuous.comp (continuous_spacetimeOfTimeSpace_right t)).aestronglyMeasurable
-  filter_upwards with x
-  rw [Real.norm_of_nonneg (by positivity : 0 ≤ C / (1 + ‖x‖)^5)]
-  exact h_bound x
+  apply (f.compCLMOfAntilipschitz ℝ ?_ (spacetimeOfTimeSpace_antilipschitz t)).integrable
+  rw [spacetimeOfTime_eq_spatialEmbedCLM_add]
+  fun_prop
 
 /-- Slice integrability: for fixed t, the slice is integrable over SpatialCoords. -/
 lemma schwartz_slice_integrable (f : SchwartzMap SpaceTime ℂ) (t : ℝ) :

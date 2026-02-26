@@ -387,12 +387,12 @@ theorem schwinger_eq_covariance_real (f g : TestFunction) :
   have h_sq_fg : ∫ ω, (ω (f + g))^2 ∂(gaussianFreeField_free m).toMeasure =
       freeCovarianceFormR m (f + g) (f + g) := by
     have := gff_second_moment_eq_covariance m (f + g)
-    simp only [distributionPairingCLM_apply, distributionPairing] at this
+    simp only [distributionPairingCLM_apply] at this
     exact this
   have h_sq_f_g : ∫ ω, (ω (f - g))^2 ∂(gaussianFreeField_free m).toMeasure =
       freeCovarianceFormR m (f - g) (f - g) := by
     have := gff_second_moment_eq_covariance m (f - g)
-    simp only [distributionPairingCLM_apply, distributionPairing] at this
+    simp only [distributionPairingCLM_apply] at this
     exact this
   rw [integral_sub, h_sq_fg, h_sq_f_g]
   -- Expand using bilinearity of Q
@@ -435,19 +435,18 @@ lemma schwinger_eq_covarianceℂ_on_reals (f g : TestFunction) :
   -- Step 1: Rewrite ↑a * ↑b = ↑(a * b) pointwise using ofReal_mul
   simp_rw [← Complex.ofReal_mul]
   -- Step 2: Integrability of the product
-  have h_int : Integrable (fun ω => distributionPairing ω f * distributionPairing ω g)
+  have h_int : Integrable (fun ω => ω f * ω g)
       (gaussianFreeField_free m).toMeasure := by
     -- Use Hölder: L² × L² → L¹
-    have hf : MemLp (fun ω => distributionPairing ω f) 2 (gaussianFreeField_free m).toMeasure :=
+    have hf : MemLp (fun ω => ω f) 2 (gaussianFreeField_free m).toMeasure :=
       gaussianFreeField_pairing_memLp m f 2 (by simp)
-    have hg : MemLp (fun ω => distributionPairing ω g) 2 (gaussianFreeField_free m).toMeasure :=
+    have hg : MemLp (fun ω => ω g) 2 (gaussianFreeField_free m).toMeasure :=
       gaussianFreeField_pairing_memLp m g 2 (by simp)
     exact hf.integrable_mul hg
   -- Step 3: Pull cast outside integral: ∫ ↑(f ω) dμ = ↑(∫ f ω dμ)
   rw [integral_ofReal_eq _ _ h_int]
   -- Step 4: Apply the real Schwinger = covariance equality and agreement on reals
-  -- Note: ω f is notation for distributionPairing ω f, and convert handles this
-  convert congrArg (↑· : ℝ → ℂ) (schwinger_eq_covariance_real m f g) using 2
+  convert congrArg Complex.ofReal (schwinger_eq_covariance_real m f g) using 2
   · exact freeCovarianceℂ_bilinear_agrees_on_reals m f g
 
 end GFFIsGaussian

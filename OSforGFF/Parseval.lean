@@ -579,7 +579,6 @@ theorem parseval_covariance_schwartz_regulated (α : ℝ) (hα : 0 < α) (m : �
 /-- Continuity of the mathlib propagator. -/
 lemma continuous_freePropagatorMomentum_mathlib (m : ℝ) [Fact (0 < m)] :
     Continuous fun k => freePropagatorMomentum_mathlib m k := by
-  unfold freePropagatorMomentum_mathlib
   have hdenom_cont : Continuous fun k : SpaceTime => (2 * Real.pi)^2 * ‖k‖^2 + m^2 :=
     Continuous.add (continuous_const.mul (continuous_norm.pow 2)) continuous_const
   refine Continuous.div continuous_const hdenom_cont ?h_ne

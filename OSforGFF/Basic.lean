@@ -169,28 +169,13 @@ abbrev FieldConfiguration := WeakDual ℝ (SchwartzMap SpaceTime ℝ)
 -- WeakDual already has the correct weak-* topology, we use the Borel σ-algebra
 instance : MeasurableSpace FieldConfiguration := borel _
 
-/-- The fundamental pairing between a field configuration (distribution) and a test function.
-    This is ⟨ω, f⟩ in the Glimm-Jaffe notation.
-
-    Note: FieldConfiguration = WeakDual ℝ (SchwartzMap SpaceTime ℝ) has the correct
-    weak-* topology, making evaluation maps x ↦ ω(x) continuous for each test function x. -/
-def distributionPairing (ω : FieldConfiguration) (f : TestFunction) : ℝ := ω f
-
-@[simp] lemma distributionPairing_add (ω₁ ω₂ : FieldConfiguration) (a : TestFunction) :
-    distributionPairing (ω₁ + ω₂) a = distributionPairing ω₁ a + distributionPairing ω₂ a := rfl
-
-@[simp] lemma distributionPairing_smul (s : ℝ) (ω : FieldConfiguration) (a : TestFunction) :
-    distributionPairing (s • ω) a = s * distributionPairing ω a :=
-  -- This follows from the definition of scalar multiplication in WeakDual
-  rfl
-
 @[simp] lemma pairing_smul_real (ω : FieldConfiguration) (s : ℝ) (a : TestFunction) :
   ω (s • a) = s * (ω a) :=
   -- This follows from the linearity of the dual pairing
   map_smul ω s a
 
 @[simp] def distributionPairingCLM (a : TestFunction) : FieldConfiguration →L[ℝ] ℝ where
-  toFun ω := distributionPairing ω a
+  toFun ω := ω a
   map_add' ω₁ ω₂ := by
     -- WeakDual addition is pointwise: (ω₁ + ω₂) a = ω₁ a + ω₂ a
     rfl
@@ -202,7 +187,7 @@ def distributionPairing (ω : FieldConfiguration) (f : TestFunction) : ℝ := ω
     exact WeakDual.eval_continuous a
 
 @[simp] lemma distributionPairingCLM_apply (a : TestFunction) (ω : FieldConfiguration) :
-    distributionPairingCLM a ω = distributionPairing ω a := rfl
+    distributionPairingCLM a ω = ω a := rfl
 
 variable [SigmaFinite μ]
 
@@ -217,7 +202,7 @@ where the integral is over field configurations ω (distributions).
     This is the fundamental object in constructive QFT. -/
 def GJGeneratingFunctional (dμ_config : ProbabilityMeasure FieldConfiguration)
   (J : TestFunction) : ℂ :=
-  ∫ ω, Complex.exp (Complex.I * (distributionPairing ω J : ℂ)) ∂dμ_config.toMeasure
+  ∫ ω, Complex.exp (Complex.I * (ω J : ℂ)) ∂dμ_config.toMeasure
 
 /-- Helper function to create a Schwartz map from a complex test function by applying a continuous linear map.
     This factors out the common pattern for extracting real/imaginary parts. -/
@@ -315,7 +300,7 @@ def GJGeneratingFunctionalℂ (dμ_config : ProbabilityMeasure FieldConfiguratio
 /-- The mean field in the Glimm-Jaffe framework -/
 def GJMean (dμ_config : ProbabilityMeasure FieldConfiguration)
   (φ : TestFunction) : ℝ :=
-  ∫ ω, distributionPairing ω φ ∂dμ_config.toMeasure
+  ∫ ω, ω φ ∂dμ_config.toMeasure
 
 /-! ## Spatial Geometry and Energy Operators -/
 

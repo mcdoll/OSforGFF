@@ -317,7 +317,7 @@ lemma gff_exp_neg_pairing_integrable (f : TestFunction) :
       ‖Real.exp (-(ω f))‖ ≤ Real.exp (1 / (4 * α)) * Real.exp (α * (distributionPairingCLM f ω)^2) := by
     filter_upwards with ω
     rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
-    simp only [distributionPairingCLM_apply, distributionPairing]
+    simp only [distributionPairingCLM_apply]
     exact h_bound (ω f)
   -- Apply Integrable.mono'
   exact h_dom_integrable.mono' h_meas h_ae_bound
@@ -393,7 +393,7 @@ lemma gff_exp_abs_pairing_memLp (f : TestFunction) (p : ENNReal) (hp : p ≠ ⊤
   have h_dom : Integrable (fun ω => C * Real.exp (α * (ω f)^2)) (μ_GFF m).toMeasure := by
     have h_const_mul : Integrable (fun ω => C * Real.exp (α * (distributionPairingCLM f ω)^2)) (μ_GFF m).toMeasure := by
       exact h_fernique.const_mul C
-    simp only [distributionPairingCLM_apply, distributionPairing] at h_const_mul
+    simp only [distributionPairingCLM_apply] at h_const_mul
     exact h_const_mul
 
   -- For the MemLp construction, we need snorm to be finite
