@@ -5,7 +5,7 @@ Authors: Michael R. Douglas, Sarah Hoback, Anna Mei, Ron Nissim
 -/
 
 import OSforGFF.Basic
-import OSforGFF.SpacetimeDecomp
+import OSforGFF.SchwartzProdIntegrable
 import Mathlib.Analysis.SpecialFunctions.JapaneseBracket
 
 /-!
@@ -28,63 +28,6 @@ depends only on the time coordinates.
 open MeasureTheory MeasureSpace FiniteDimensional Real
 
 /-! ### Auxiliary Lemmas -/
-
-/-- Norm bound: ‖spacetimeDecomp.symm (t, v)‖ ≥ ‖v‖.
-    This follows from: ‖x‖² = t² + ‖v‖² ≥ ‖v‖². -/
-lemma spacetimeDecomp_symm_norm_ge (t : ℝ) (v : SpatialCoords) :
-    ‖spacetimeDecomp.symm (t, v)‖ ≥ ‖v‖ := by
-  have h_spatial : spatialPart (spacetimeDecomp.symm (t, v)) = v :=
-    congr_arg Prod.snd (spacetimeDecomp.apply_symm_apply (t, v))
-  have h_time : (spacetimeDecomp.symm (t, v)) 0 = t :=
-    congr_arg Prod.fst (spacetimeDecomp.apply_symm_apply (t, v))
-  have h_decomp := spacetime_norm_sq_decompose (spacetimeDecomp.symm (t, v))
-  rw [h_time, h_spatial] at h_decomp
-  have h_sq_ge : ‖spacetimeDecomp.symm (t, v)‖^2 ≥ ‖v‖^2 := by
-    rw [h_decomp]; nlinarith [sq_nonneg t]
-  have h_norm_nonneg : 0 ≤ ‖spacetimeDecomp.symm (t, v)‖ := norm_nonneg _
-  exact le_of_sq_le_sq h_sq_ge h_norm_nonneg
-
-/-- Slice integrability: for fixed t, the slice is integrable over SpatialCoords. -/
-lemma schwartz_slice_integrable (f : SchwartzMap SpaceTime ℂ) (t : ℝ) :
-    Integrable (fun v : SpatialCoords => ‖f (spacetimeDecomp.symm (t, v))‖) volume := by
-  have hST_dim : Module.finrank ℝ SpaceTime < 5 := by
-    simp only [SpaceTime, finrank_euclideanSpace, Fintype.card_fin]; norm_num
-  obtain ⟨C, hC_pos, hf_decay⟩ := schwartz_integrable_decay f 5 hST_dim
-  have h_dom_integrable : Integrable (fun v : SpatialCoords => C / (1 + ‖v‖)^5) volume := by
-    have h_dim : (Module.finrank ℝ SpatialCoords : ℝ) < 5 := by
-      simp only [SpatialCoords, finrank_euclideanSpace, Fintype.card_fin]; norm_num
-    have h_int := integrable_one_add_norm (E := SpatialCoords) (μ := volume) (r := 5) h_dim
-    have h_eq : ∀ v : SpatialCoords, C / (1 + ‖v‖) ^ 5 = C * (1 + ‖v‖) ^ (-(5 : ℝ)) := by
-      intro v
-      have h_pos : 0 < 1 + ‖v‖ := by linarith [norm_nonneg v]
-      have h1 : ((1 + ‖v‖) ^ 5)⁻¹ = (1 + ‖v‖) ^ (-(5 : ℝ)) := by
-        rw [← Real.rpow_natCast (1 + ‖v‖) 5, ← Real.rpow_neg (le_of_lt h_pos)]; simp
-      rw [div_eq_mul_inv, h1]
-    simp_rw [h_eq]
-    exact h_int.const_mul C
-  have h_bound : ∀ v : SpatialCoords, ‖f (spacetimeDecomp.symm (t, v))‖ ≤ C / (1 + ‖v‖)^5 := by
-    intro v
-    have h1 := hf_decay (spacetimeDecomp.symm (t, v))
-    have h_norm_ge := spacetimeDecomp_symm_norm_ge t v
-    have h_bracket_ge : 1 + ‖spacetimeDecomp.symm (t, v)‖ ≥ 1 + ‖v‖ := by linarith
-    have h_bracket_pos : 0 < 1 + ‖v‖ := by linarith [norm_nonneg v]
-    have h_pow_le : (1 + ‖v‖)^5 ≤ (1 + ‖spacetimeDecomp.symm (t, v)‖)^5 := by
-      apply pow_le_pow_left₀ (by linarith [norm_nonneg v]) h_bracket_ge
-    calc ‖f (spacetimeDecomp.symm (t, v))‖
-        ≤ C / (1 + ‖spacetimeDecomp.symm (t, v)‖)^5 := h1
-      _ ≤ C / (1 + ‖v‖)^5 := by
-          apply div_le_div_of_nonneg_left (le_of_lt hC_pos) (by positivity) h_pow_le
-  apply Integrable.mono h_dom_integrable
-  · have h1 : Measurable (fun v : SpatialCoords => ((t, v) : ℝ × SpatialCoords)) :=
-      Measurable.prodMk measurable_const measurable_id
-    have h2 : Measurable spacetimeDecomp.symm := spacetimeDecomp.symm.measurable
-    have h3 : Continuous f := f.continuous
-    have h4 : Continuous (fun x : SpaceTime => ‖f x‖) := h3.norm
-    exact (h4.measurable.comp (h2.comp h1)).aestronglyMeasurable
-  · filter_upwards with v
-    simp only [Real.norm_of_nonneg (norm_nonneg _)]
-    rw [Real.norm_of_nonneg (by positivity : 0 ≤ C / (1 + ‖v‖)^5)]
-    exact h_bound v
 
 /-- Schwartz composed with spacetimeDecomp.symm is integrable on the product. -/
 lemma schwartz_integrable_on_prod' (f : SchwartzMap SpaceTime ℂ) :

@@ -109,8 +109,6 @@ theorem schwingerTwoPointFunction_eq_GFF (m : ℝ) [Fact (0 < m)] (x : SpaceTime
     intro f g
     -- Step 1: S₂ = ∫ω (ωf)(ωg) via schwinger_eq_covariance
     rw [schwinger_eq_covariance]
-    -- Unfold distributionPairing to ω f
-    simp only [distributionPairing]
     -- Step 2: For GFF, ∫ω (ωf)(ωg) = freeCovarianceFormR via schwinger_eq_covariance_real
     rw [GFFIsGaussian.schwinger_eq_covariance_real m f g]
     -- Step 3: freeCovarianceFormR = ∫∫ f(u) * freeCovariance(u,v) * g(v)
@@ -143,12 +141,10 @@ theorem schwingerTwoPointFunction_eq_freeCovarianceKernel (m : ℝ) [Fact (0 < m
     - Near origin: K₁(mr) ~ 1/(mr), giving decay like 1/r²
     - Far from origin: K₁(mr) ~ exp(-mr), which is even faster decay -/
 theorem schwinger_two_point_decay_bound_GFF (m : ℝ) [Fact (0 < m)] :
-  ∃ C : ℝ, C > 0 ∧
-    ∀ x y : SpaceTime,
-      ‖SchwingerTwoPointFunction_GFF m (x - y)‖ ≤
-        C * ‖x - y‖ ^ (-2 : ℝ) := by
+  ∃ C : ℝ, ∀ x y : SpaceTime,
+    ‖SchwingerTwoPointFunction_GFF m (x - y)‖ ≤ C * ‖x - y‖ ^ (-2 : ℝ) := by
   obtain ⟨C, hC_pos, hC_bound⟩ := freeCovarianceKernel_decay_bound m (Fact.out)
-  refine ⟨C, hC_pos, fun x y => ?_⟩
+  refine ⟨C, fun x y => ?_⟩
   -- SchwingerTwoPointFunction_GFF is definitionally equal to freeCovarianceKernel
   rw [schwingerTwoPoint_eq_freeCovarianceKernel]
   -- The norm of a real number is its absolute value
@@ -160,12 +156,10 @@ theorem schwinger_two_point_decay_bound_GFF (m : ℝ) [Fact (0 < m)] :
     Note: At x = y (coincident points), the bound still holds since the abstract
     definition regularizes S(0) = 0 and 0^(-2) = 0 by Mathlib convention. -/
 theorem schwinger_two_point_decay_bound (m : ℝ) [Fact (0 < m)] :
-  ∃ C : ℝ, C > 0 ∧
-    ∀ x y : SpaceTime,
-      ‖SchwingerTwoPointFunction (gaussianFreeField_free m) (x - y)‖ ≤
-        C * ‖x - y‖ ^ (-2 : ℝ) := by
-  obtain ⟨C, hC_pos, hC_bound⟩ := schwinger_two_point_decay_bound_GFF m
-  refine ⟨C, hC_pos, fun x y => ?_⟩
+  ∃ C : ℝ, ∀ x y : SpaceTime,
+    ‖SchwingerTwoPointFunction (gaussianFreeField_free m) (x - y)‖ ≤ C * ‖x - y‖ ^ (-2 : ℝ) := by
+  obtain ⟨C, hC_bound⟩ := schwinger_two_point_decay_bound_GFF m
+  refine ⟨C, fun x y => ?_⟩
   by_cases h : x - y = 0
   · -- At coincident points x = y, both sides are 0
     simp only [h]
@@ -405,8 +399,7 @@ lemma covariance_imaginary_L2_bound (m : ℝ) [Fact (0 < m)] (f : TestFunction�
         (1 / m^2) * ∫ k, ‖F k‖^2 ∂volume := by
     have h_const_pull : ∫ k, (1 / m^2) * ‖F k‖^2 ∂volume
         = (1 / m^2) * ∫ k, ‖F k‖^2 ∂volume :=
-      integral_const_mul_eq (μ := volume) (c := (1 / m^2))
-        (f := fun k => ‖F k‖^2) hF_sq_int
+      MeasureTheory.integral_const_mul (1 / m ^ 2) fun a ↦ ‖F a‖ ^ 2
     calc
       ∫ k, ‖F k‖^2 * freePropagatorMomentum_mathlib m k ∂volume
           ≤ ∫ k, (1 / m^2) * ‖F k‖^2 ∂volume := h_int_le
@@ -490,14 +483,12 @@ lemma gff_two_point_locally_integrable (m : ℝ) [Fact (0 < m)] :
   TwoPointIntegrable (gaussianFreeField_free m) := by
   unfold TwoPointIntegrable
   -- Obtain the decay bound
-  obtain ⟨C, hC_pos, h_decay⟩ := schwinger_two_point_decay_bound m
+  obtain ⟨C, h_decay⟩ := schwinger_two_point_decay_bound m
   -- Apply real version of the decay axiom
   refine locallyIntegrable_of_rpow_decay_real (d := STDimension) (C := C) (α := 2)
-    ?hd ?hC ?hα ?h_decay ?h_meas
+    ?hd ?hα ?h_decay ?h_meas
   · -- hd: STDimension = 4 ≥ 3
     norm_num [STDimension]
-  · -- hC: C > 0
-    exact hC_pos
   · -- hα: 2 < STDimension (2 < 4)
     norm_num [STDimension]
   · -- h_decay: Decay bound holds: convert two-argument decay to single-argument

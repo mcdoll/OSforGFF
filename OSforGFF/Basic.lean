@@ -146,7 +146,7 @@ def pointwiseMulCLM : ℂ →L[ℂ] ℂ →L[ℂ] ℂ := ContinuousLinearMap.mul
 
 /-- Multiplication lifted to the Schwartz space. -/
 def schwartzMul (g : TestFunctionℂ) : TestFunctionℂ →L[ℂ] TestFunctionℂ :=
-  (SchwartzMap.bilinLeftCLM pointwiseMulCLM (SchwartzMap.hasTemperateGrowth_general g))
+  (SchwartzMap.bilinLeftCLM pointwiseMulCLM g.hasTemperateGrowth)
 
 
 
@@ -169,28 +169,8 @@ abbrev FieldConfiguration := WeakDual ℝ (SchwartzMap SpaceTime ℝ)
 -- WeakDual already has the correct weak-* topology, we use the Borel σ-algebra
 instance : MeasurableSpace FieldConfiguration := borel _
 
-/-- The fundamental pairing between a field configuration (distribution) and a test function.
-    This is ⟨ω, f⟩ in the Glimm-Jaffe notation.
-
-    Note: FieldConfiguration = WeakDual ℝ (SchwartzMap SpaceTime ℝ) has the correct
-    weak-* topology, making evaluation maps x ↦ ω(x) continuous for each test function x. -/
-def distributionPairing (ω : FieldConfiguration) (f : TestFunction) : ℝ := ω f
-
-@[simp] lemma distributionPairing_add (ω₁ ω₂ : FieldConfiguration) (a : TestFunction) :
-    distributionPairing (ω₁ + ω₂) a = distributionPairing ω₁ a + distributionPairing ω₂ a := rfl
-
-@[simp] lemma distributionPairing_smul (s : ℝ) (ω : FieldConfiguration) (a : TestFunction) :
-    distributionPairing (s • ω) a = s * distributionPairing ω a :=
-  -- This follows from the definition of scalar multiplication in WeakDual
-  rfl
-
-@[simp] lemma pairing_smul_real (ω : FieldConfiguration) (s : ℝ) (a : TestFunction) :
-  ω (s • a) = s * (ω a) :=
-  -- This follows from the linearity of the dual pairing
-  map_smul ω s a
-
 @[simp] def distributionPairingCLM (a : TestFunction) : FieldConfiguration →L[ℝ] ℝ where
-  toFun ω := distributionPairing ω a
+  toFun ω := ω a
   map_add' ω₁ ω₂ := by
     -- WeakDual addition is pointwise: (ω₁ + ω₂) a = ω₁ a + ω₂ a
     rfl
@@ -202,9 +182,7 @@ def distributionPairing (ω : FieldConfiguration) (f : TestFunction) : ℝ := ω
     exact WeakDual.eval_continuous a
 
 @[simp] lemma distributionPairingCLM_apply (a : TestFunction) (ω : FieldConfiguration) :
-    distributionPairingCLM a ω = distributionPairing ω a := rfl
-
-variable [SigmaFinite μ]
+    distributionPairingCLM a ω = ω a := rfl
 
 /-! ## Glimm-Jaffe Generating Functional
 
@@ -217,49 +195,16 @@ where the integral is over field configurations ω (distributions).
     This is the fundamental object in constructive QFT. -/
 def GJGeneratingFunctional (dμ_config : ProbabilityMeasure FieldConfiguration)
   (J : TestFunction) : ℂ :=
-  ∫ ω, Complex.exp (Complex.I * (distributionPairing ω J : ℂ)) ∂dμ_config.toMeasure
+  ∫ ω, Complex.exp (Complex.I * (ω J : ℂ)) ∂dμ_config.toMeasure
 
-/-- Helper function to create a Schwartz map from a complex test function by applying a continuous linear map.
-    This factors out the common pattern for extracting real/imaginary parts. -/
-def schwartz_comp_clm (f : TestFunctionℂ) (L : ℂ →L[ℝ] ℝ) : TestFunction :=
-  SchwartzMap.mk (fun x => L (f x)) (by
-    -- L is a continuous linear map, hence smooth
-    exact ContDiff.comp L.contDiff f.smooth'
-  ) (by
-    -- Polynomial growth: since |L(z)| ≤ ||L|| * |z|, derivatives are controlled
-    intro k n
-    obtain ⟨C, hC⟩ := f.decay' k n
-    use C * ‖L‖
-    intro x
-    -- The function (fun x => L (f x)) equals (L ∘ f.toFun)
-    have h_eq : (fun y => L (f y)) = L ∘ f.toFun := rfl
-    -- Key: iteratedFDeriv of L ∘ f equals L.compContinuousMultilinearMap (iteratedFDeriv f)
-    have h_deriv : iteratedFDeriv ℝ n (L ∘ f.toFun) x =
-        L.compContinuousMultilinearMap (iteratedFDeriv ℝ n f.toFun x) :=
-      ContinuousLinearMap.iteratedFDeriv_comp_left L f.smooth'.contDiffAt (WithTop.coe_le_coe.mpr le_top)
-    rw [h_eq, h_deriv]
-    -- Use the norm bound: ‖L.compContinuousMultilinearMap m‖ ≤ ‖L‖ * ‖m‖
-    calc ‖x‖ ^ k * ‖L.compContinuousMultilinearMap (iteratedFDeriv ℝ n f.toFun x)‖
-        ≤ ‖x‖ ^ k * (‖L‖ * ‖iteratedFDeriv ℝ n f.toFun x‖) := by
-          apply mul_le_mul_of_nonneg_left
-          exact ContinuousLinearMap.norm_compContinuousMultilinearMap_le L _
-          exact pow_nonneg (norm_nonneg _) _
-      _ = ‖L‖ * (‖x‖ ^ k * ‖iteratedFDeriv ℝ n f.toFun x‖) := by ring
-      _ ≤ ‖L‖ * C := by
-          apply mul_le_mul_of_nonneg_left (hC x) (norm_nonneg _)
-      _ = C * ‖L‖ := by ring
-  )
 
-omit [SigmaFinite μ]
-
-/-- Evaluate `schwartz_comp_clm` pointwise. -/
-@[simp] lemma schwartz_comp_clm_apply (f : TestFunctionℂ) (L : ℂ →L[ℝ] ℝ) (x : SpaceTime) :
-  (schwartz_comp_clm f L) x = L (f x) := rfl
+@[deprecated (since := "now")]
+alias schwartz_comp_clm := SchwartzMap.postcompCLM
 
 /-- Decompose a complex test function into its real and imaginary parts as real test functions.
     This is more efficient than separate extraction functions. -/
 def complex_testfunction_decompose (f : TestFunctionℂ) : TestFunction × TestFunction :=
-  (schwartz_comp_clm f Complex.reCLM, schwartz_comp_clm f Complex.imCLM)
+  (f.postcompCLM Complex.reCLM, f.postcompCLM Complex.imCLM)
 
 /-- First component of the decomposition evaluates to the real part pointwise. -/
 @[simp] lemma complex_testfunction_decompose_fst_apply
@@ -315,7 +260,7 @@ def GJGeneratingFunctionalℂ (dμ_config : ProbabilityMeasure FieldConfiguratio
 /-- The mean field in the Glimm-Jaffe framework -/
 def GJMean (dμ_config : ProbabilityMeasure FieldConfiguration)
   (φ : TestFunction) : ℝ :=
-  ∫ ω, distributionPairing ω φ ∂dμ_config.toMeasure
+  ∫ ω, ω φ ∂dμ_config.toMeasure
 
 /-! ## Spatial Geometry and Energy Operators -/
 

@@ -196,8 +196,8 @@ lemma gff_generating_norm_le_one_real (m : ℝ) [Fact (0 < m)] (f : TestFunction
     - Exponential estimate: |exp(-z) - 1| ≤ 2|z| for |z| ≤ 1 -/
 lemma GFF_OS4_from_small_decay_real (m : ℝ) [Fact (0 < m)]
     (f g : TestFunction) (a : SpaceTime) (δ : ℝ) (_hδ_pos : δ > 0) (hδ_small : δ ≤ 1)
-    (h_decay : ‖SchwingerFunction₂ (gaussianFreeField_free m) f (g.translate a)‖ < δ) :
-    ‖GJGeneratingFunctional (gaussianFreeField_free m) (f + g.translate a) -
+    (h_decay : ‖SchwingerFunction₂ (gaussianFreeField_free m) f (g.compSubConstCLM ℝ a)‖ < δ) :
+    ‖GJGeneratingFunctional (gaussianFreeField_free m) (f + g.compSubConstCLM ℝ a) -
      GJGeneratingFunctional (gaussianFreeField_free m) f *
      GJGeneratingFunctional (gaussianFreeField_free m) g‖ < 2 * δ := by
   -- For real test functions, use the Gaussian factorization in complex form
@@ -206,7 +206,7 @@ lemma GFF_OS4_from_small_decay_real (m : ℝ) [Fact (0 < m)]
   -- Convert to complex generating functional
   set fC := toComplex f
   set gC := toComplex g
-  set T_a_gC := toComplex (g.translate a)
+  set T_a_gC := toComplex (g.compSubConstCLM ℝ a)
 
   -- The real generating functional equals the complex one on real test functions
   have h_eq_f : GJGeneratingFunctional (gaussianFreeField_free m) f =
@@ -215,9 +215,10 @@ lemma GFF_OS4_from_small_decay_real (m : ℝ) [Fact (0 < m)]
   have h_eq_g : GJGeneratingFunctional (gaussianFreeField_free m) g =
                 GJGeneratingFunctionalℂ (gaussianFreeField_free m) gC :=
     (GJGeneratingFunctionalℂ_toComplex (gaussianFreeField_free m) g).symm
-  have h_eq_sum : GJGeneratingFunctional (gaussianFreeField_free m) (f + g.translate a) =
+  have h_eq_sum : GJGeneratingFunctional (gaussianFreeField_free m) (f + g.compSubConstCLM ℝ a) =
                   GJGeneratingFunctionalℂ (gaussianFreeField_free m) (fC + T_a_gC) := by
-    rw [← GJGeneratingFunctionalℂ_toComplex, toComplex_add]
+    rw [← GJGeneratingFunctionalℂ_toComplex]
+    simp [toComplex, fC, T_a_gC]
 
   -- Rewrite in terms of complex generating functional
   rw [h_eq_f, h_eq_g, h_eq_sum]
@@ -258,41 +259,41 @@ lemma GFF_OS4_from_small_decay_real (m : ℝ) [Fact (0 < m)]
   have h_diff : Z (fC + T_a_gC) - Z fC * Z gC = Z fC * Z gC * (Complex.exp (-S₂ fC T_a_gC) - 1) := by
     rw [h_combined]; ring
 
-  -- The cross term decay: S₂ fC T_a_gC = ↑(SchwingerFunction₂ f (g.translate a))
+  -- The cross term decay: S₂ fC T_a_gC = ↑(SchwingerFunction₂ f (g.compSubConstCLM ℝ a))
   -- This follows from the real-complex correspondence of Schwinger functions
-  have h_S2_eq : S₂ fC T_a_gC = ↑(SchwingerFunction₂ (gaussianFreeField_free m) f (g.translate a)) := by
+  have h_S2_eq : S₂ fC T_a_gC = ↑(SchwingerFunction₂ (gaussianFreeField_free m) f (g.compSubConstCLM ℝ a)) := by
     -- Both are integrals of f(x) C(x,y) g(y) for real test functions
     -- SchwingerFunctionℂ₂ on toComplex gives the same as SchwingerFunction₂ cast to ℂ
     show SchwingerFunctionℂ₂ (gaussianFreeField_free m) fC T_a_gC = _
     -- Use the definitions directly:
     -- SchwingerFunctionℂ₂ = ∫ (distributionPairingℂ_real ω f) * (distributionPairingℂ_real ω g) dμ
-    -- For toComplex of real f, distributionPairingℂ_real ω (toComplex f) = ↑(distributionPairing ω f)
-    -- SchwingerFunction₂ = ∫ (distributionPairing ω f) * (distributionPairing ω g) dμ
+    -- For toComplex of real f, distributionPairingℂ_real ω (toComplex f) = ↑(ω f)
+    -- SchwingerFunction₂ = ∫ (ω f) * (ω g) dμ
     -- Both integrals agree: ∫ ↑(a * b) dμ = ↑(∫ a * b dμ) when integrable
     simp only [SchwingerFunctionℂ₂, SchwingerFunctionℂ, SchwingerFunction₂, SchwingerFunction,
                Fin.prod_univ_two, Matrix.cons_val_zero, Matrix.cons_val_one]
     -- Convert the integral of complex products to integral of real products cast to ℂ
     have h_fun_eq : (fun ω => distributionPairingℂ_real ω fC * distributionPairingℂ_real ω T_a_gC) =
-        (fun x => (↑(distributionPairing x f * distributionPairing x (g.translate a)) : ℂ)) := by
+        (fun x : FieldConfiguration => (↑(x f * x (g.compSubConstCLM ℝ a)) : ℂ)) := by
       ext ω
-      -- fC = toComplex f and T_a_gC = toComplex (g.translate a)
-      show distributionPairingℂ_real ω (toComplex f) * distributionPairingℂ_real ω (toComplex (g.translate a)) = _
-      rw [distributionPairingℂ_real_toComplex, distributionPairingℂ_real_toComplex, Complex.ofReal_mul]
+      -- fC = toComplex f and T_a_gC = toComplex (g.compSubConstCLM ℝ a)
+      show distributionPairingℂ_real ω (toComplex f) * distributionPairingℂ_real ω (toComplex (g.compSubConstCLM ℝ a)) = _
+      simp [toComplex]
     rw [h_fun_eq]
     -- Now the goal is: ∫ ↑(f(ω) * g(ω)) dμ = ↑(∫ f(ω) * g(ω) dμ)
     -- Need integrability for integral_ofReal_eq
     have h_int : MeasureTheory.Integrable
-        (fun ω => distributionPairing ω f * distributionPairing ω (g.translate a))
+        (fun ω => ω f * ω (g.compSubConstCLM ℝ a))
         (gaussianFreeField_free m).toMeasure := by
       -- Use Hölder: L² × L² → L¹
-      have hf : MemLp (fun ω => distributionPairing ω f) 2 (gaussianFreeField_free m).toMeasure :=
+      have hf : MemLp (fun ω => ω f) 2 (gaussianFreeField_free m).toMeasure :=
         gaussianFreeField_pairing_memLp m f 2 (by simp)
-      have hg : MemLp (fun ω => distributionPairing ω (g.translate a)) 2 (gaussianFreeField_free m).toMeasure :=
-        gaussianFreeField_pairing_memLp m (g.translate a) 2 (by simp)
+      have hg : MemLp (fun ω => ω (g.compSubConstCLM ℝ a)) 2 (gaussianFreeField_free m).toMeasure :=
+        gaussianFreeField_pairing_memLp m (g.compSubConstCLM ℝ a) 2 (by simp)
       exact hf.integrable_mul hg
     exact integral_ofReal_eq (gaussianFreeField_free m).toMeasure _ h_int
 
-  have h_S2_norm : ‖S₂ fC T_a_gC‖ = |SchwingerFunction₂ (gaussianFreeField_free m) f (g.translate a)| := by
+  have h_S2_norm : ‖S₂ fC T_a_gC‖ = |SchwingerFunction₂ (gaussianFreeField_free m) f (g.compSubConstCLM ℝ a)| := by
     rw [h_S2_eq, Complex.norm_real, Real.norm_eq_abs]
 
   have h_S2_small : ‖-S₂ fC T_a_gC‖ ≤ 1 := by
@@ -315,7 +316,7 @@ lemma GFF_OS4_from_small_decay_real (m : ℝ) [Fact (0 < m)]
         · exact mul_self_nonneg 1
     _ = ‖Complex.exp (-S₂ fC T_a_gC) - 1‖ := by ring
     _ ≤ 2 * ‖-S₂ fC T_a_gC‖ := Complex.norm_exp_sub_one_le h_S2_small
-    _ = 2 * |SchwingerFunction₂ (gaussianFreeField_free m) f (g.translate a)| := by
+    _ = 2 * |SchwingerFunction₂ (gaussianFreeField_free m) f (g.compSubConstCLM ℝ a)| := by
         simp [norm_neg, h_S2_norm]
     _ < 2 * δ := by
         apply mul_lt_mul_of_pos_left h_decay
@@ -336,7 +337,7 @@ lemma GFF_OS4_from_small_decay_real (m : ℝ) [Fact (0 < m)]
 theorem schwartz_cross_covariance_decay_real (m : ℝ) [Fact (0 < m)]
     (f g : TestFunction) (ε : ℝ) (hε : ε > 0) :
     ∃ R > 0, ∀ a : SpaceTime, ‖a‖ > R →
-      ‖SchwingerFunction₂ (gaussianFreeField_free m) f (g.translate a)‖ < ε := by
+      ‖SchwingerFunction₂ (gaussianFreeField_free m) f (g.compSubConstCLM ℝ a)‖ < ε := by
   -- Step 1: Get the kernel decay bound
   have hm : 0 < m := Fact.out
   obtain ⟨C, hC_pos, hK_decay⟩ := freeCovarianceKernel_decay_bound m hm
@@ -408,46 +409,45 @@ theorem schwartz_cross_covariance_decay_real (m : ℝ) [Fact (0 < m)]
   -- Step 6: Connect SchwingerFunction₂ to the double integral
   -- SchwingerFunction₂ (GFF) f g = freeCovarianceFormR m f g = ∫∫ f(x) C(x-y) g(y) dx dy
   -- For translated g, this becomes ∫∫ f(x) C(x-y) g(y-a) dx dy
-  calc ‖SchwingerFunction₂ (gaussianFreeField_free m) f (g.translate a)‖
-      = |SchwingerFunction₂ (gaussianFreeField_free m) f (g.translate a)| := Real.norm_eq_abs _
-    _ = ‖(SchwingerFunction₂ (gaussianFreeField_free m) f (g.translate a) : ℂ)‖ := by
+  calc ‖SchwingerFunction₂ (gaussianFreeField_free m) f (g.compSubConstCLM ℝ a)‖
+      = |SchwingerFunction₂ (gaussianFreeField_free m) f (g.compSubConstCLM ℝ a)| := Real.norm_eq_abs _
+    _ = ‖(SchwingerFunction₂ (gaussianFreeField_free m) f (g.compSubConstCLM ℝ a) : ℂ)‖ := by
         rw [Complex.norm_real, Real.norm_eq_abs]
     _ = ‖∫ x : SpaceTime, ∫ y : SpaceTime,
           (toComplex f) x * (freeCovarianceKernel m (x - y) : ℂ) * (toComplex g) (y - a)‖ := by
         -- Step 6a: SchwingerFunction₂ = ∫ ω, (ω f)(ω g') (by schwinger_eq_covariance)
-        have h_schwinger1 : SchwingerFunction₂ (gaussianFreeField_free m) f (g.translate a)
-            = ∫ ω, (distributionPairing ω f) * (distributionPairing ω (g.translate a))
+        have h_schwinger1 : SchwingerFunction₂ (gaussianFreeField_free m) f (g.compSubConstCLM ℝ a)
+            = ∫ ω, (ω f) * (ω (g.compSubConstCLM ℝ a))
               ∂(gaussianFreeField_free m).toMeasure :=
-          schwinger_eq_covariance (gaussianFreeField_free m) f (g.translate a)
+          schwinger_eq_covariance (gaussianFreeField_free m) f (g.compSubConstCLM ℝ a)
         -- Step 6b: ∫ ω, (ω f)(ω g') = freeCovarianceFormR (by schwinger_eq_covariance_real)
-        have h_schwinger2 : ∫ ω, (ω f) * (ω (g.translate a)) ∂(gaussianFreeField_free m).toMeasure
-            = freeCovarianceFormR m f (g.translate a) :=
-          GFFIsGaussian.schwinger_eq_covariance_real m f (g.translate a)
+        have h_schwinger2 : ∫ ω, (ω f) * (ω (g.compSubConstCLM ℝ a)) ∂(gaussianFreeField_free m).toMeasure
+            = freeCovarianceFormR m f (g.compSubConstCLM ℝ a) :=
+          GFFIsGaussian.schwinger_eq_covariance_real m f (g.compSubConstCLM ℝ a)
         -- Combine: SchwingerFunction₂ = freeCovarianceFormR
-        have h_schwinger : SchwingerFunction₂ (gaussianFreeField_free m) f (g.translate a)
-            = freeCovarianceFormR m f (g.translate a) := by
+        have h_schwinger : SchwingerFunction₂ (gaussianFreeField_free m) f (g.compSubConstCLM ℝ a)
+            = freeCovarianceFormR m f (g.compSubConstCLM ℝ a) := by
           rw [h_schwinger1]
-          simp only [distributionPairing]
           exact h_schwinger2
         -- Step 6c: freeCovarianceFormR uses freeCovariance = freeCovarianceKernel (x - y)
         -- freeCovarianceFormR m f h = ∫∫ f(x) freeCovariance(x,y) h(y) dx dy
-        -- and (g.translate a)(y) = g(y - a)
+        -- and (g.compSubConstCLM ℝ a)(y) = g(y - a)
         rw [h_schwinger]
         -- Convert the real integral to complex
         -- Key: freeCovarianceFormR = ∫∫ f(x) * freeCovariance(x,y) * h(y)
         -- and freeCovariance m x y = freeCovarianceKernel m (x - y)
         congr 1
-        -- Show: (freeCovarianceFormR m f (g.translate a) : ℂ)
+        -- Show: (freeCovarianceFormR m f (g.compSubConstCLM ℝ a) : ℂ)
         --     = ∫∫ (toComplex f) x * (freeCovarianceKernel m (x-y) : ℂ) * (toComplex g) (y-a)
         unfold freeCovarianceFormR
-        -- Now LHS = (∫∫ f(x) * freeCovariance(x,y) * (g.translate a)(y) : ℂ)
+        -- Now LHS = (∫∫ f(x) * freeCovariance(x,y) * (g.compSubConstCLM ℝ a)(y) : ℂ)
         -- Use translation invariance: freeCovariance m x y = freeCovarianceKernel m (x - y)
         have h_transl_inv : ∀ x y, freeCovariance m x y = freeCovarianceKernel m (x - y) := by
           intro x y
           unfold freeCovarianceKernel freeCovariance freeCovarianceBessel
           simp only [zero_sub, norm_neg]
-        -- Use translate_apply: (g.translate a) y = g (y - a)
-        simp_rw [SchwartzMap.translate_apply, h_transl_inv, toComplex_apply]
+        -- Use translate_apply: (g.compSubConstCLM ℝ a) y = g (y - a)
+        simp_rw [SchwartzMap.compSubConstCLM_apply, h_transl_inv, toComplex_apply]
         -- Goal: ↑(∫ x, ∫ y, f x * K(x-y) * g(y-a)) = ∫ x, ∫ y, ↑(f x) * ↑(K(x-y)) * ↑(g(y-a))
         -- First, push ofReal inside the products on the RHS
         have h_prod : ∀ x y,
@@ -496,14 +496,14 @@ theorem gaussianFreeField_satisfies_OS4 (m : ℝ) [Fact (0 < m)] :
   intro a ha
 
   -- Apply the decay bound
-  have h_S2_small : ‖SchwingerFunction₂ (gaussianFreeField_free m) f (g.translate a)‖ < δ :=
+  have h_S2_small : ‖SchwingerFunction₂ (gaussianFreeField_free m) f (g.compSubConstCLM ℝ a)‖ < δ :=
     hR_decay a ha
 
   -- Apply the technical lemma
   have h_bound := GFF_OS4_from_small_decay_real m f g a δ hδ_pos hδ_small h_S2_small
 
   -- Conclude: 2δ ≤ ε
-  calc ‖GJGeneratingFunctional (gaussianFreeField_free m) (f + g.translate a) -
+  calc ‖GJGeneratingFunctional (gaussianFreeField_free m) (f + g.compSubConstCLM ℝ a) -
          GJGeneratingFunctional (gaussianFreeField_free m) f *
          GJGeneratingFunctional (gaussianFreeField_free m) g‖
       < 2 * δ := h_bound
@@ -518,7 +518,7 @@ but kept as an alternative qualitative formulation of clustering. -/
 def CovarianceClustering_real (dμ_config : ProbabilityMeasure FieldConfiguration) : Prop :=
   ∀ (f g : TestFunction) (ε : ℝ), ε > 0 →
     ∃ R > 0, ∀ a : SpaceTime, ‖a‖ > R →
-      ‖SchwingerFunction₂ dμ_config f (g.translate a)‖ < ε
+      ‖SchwingerFunction₂ dμ_config f (g.compSubConstCLM ℝ a)‖ < ε
 
 /-- The free covariance has the clustering property. -/
 theorem freeCovarianceClustering_real (m : ℝ) [Fact (0 < m)] :

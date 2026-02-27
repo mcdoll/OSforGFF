@@ -51,14 +51,6 @@ noncomputable def bumpToSchwartz (φ : ContDiffBump (0 : SpaceTime)) : TestFunct
 theorem bumpToSchwartz_apply (φ : ContDiffBump (0 : SpaceTime)) (x : SpaceTime) :
     bumpToSchwartz φ x = φ.normed volume x := rfl
 
-/-- Translate a Schwartz function by a vector.
-    This is an alias for `SchwartzMap.translate` specialized to SpaceTime.
-
-    Translation preserves smoothness and decay properties.
-    See `SchwartzMap.translate` in FunctionalAnalysis.lean for the general version. -/
-noncomputable def translateSchwartz (f : TestFunction) (a : SpaceTime) : TestFunction :=
-  f.translate a
-
 /-- The smeared two-point function using a bump function.
     This is well-defined (modulo bumpToSchwartz) and converges to the
     pointwise value as the bump width → 0.
@@ -67,7 +59,7 @@ noncomputable def translateSchwartz (f : TestFunction) (a : SpaceTime) : TestFun
 noncomputable def SmearedTwoPointFunction (dμ_config : ProbabilityMeasure FieldConfiguration)
     (φ : ContDiffBump (0 : SpaceTime)) (x : SpaceTime) : ℝ :=
   SchwingerFunction₂ dμ_config
-    (translateSchwartz (bumpToSchwartz φ) x)
+    (SchwartzMap.compSubConstCLM ℝ x (bumpToSchwartz φ))
     (bumpToSchwartz φ)
 
 /-- A canonical sequence of bump functions with rOut → 0.
@@ -146,14 +138,14 @@ theorem smearedTwoPoint_tendsto_schwingerTwoPoint
   -- By double_mollifier_convergence, this → C(x)
   simp only [SmearedTwoPointFunction]
   -- Rewrite using hS₂
-  have h_eq : ∀ i, SchwingerFunction₂ dμ_config (translateSchwartz (bumpToSchwartz (φ i)) x) (bumpToSchwartz (φ i)) =
-      ∫ u, ∫ v, (translateSchwartz (bumpToSchwartz (φ i)) x) u * C (u - v) * (bumpToSchwartz (φ i)) v := by
+  have h_eq : ∀ i, SchwingerFunction₂ dμ_config (SchwartzMap.compSubConstCLM ℝ x (bumpToSchwartz (φ i))) (bumpToSchwartz (φ i)) =
+      ∫ u, ∫ v, (SchwartzMap.compSubConstCLM ℝ x (bumpToSchwartz (φ i))) u * C (u - v) * (bumpToSchwartz (φ i)) v := by
     intro i
     exact hS₂ _ _
   simp_rw [h_eq]
   -- bumpToSchwartz produces the normed bump, so we can directly apply double_mollifier_convergence
   -- translateSchwartz is SchwartzMap.translate, which shifts by x
-  simp only [translateSchwartz, SchwartzMap.translate_apply, bumpToSchwartz_apply]
+  simp only [SchwartzMap.compSubConstCLM_apply, bumpToSchwartz_apply]
   -- Now apply double_mollifier_convergence with the Schwartz functions
   exact double_mollifier_convergence C hC x hx φ hφ
 

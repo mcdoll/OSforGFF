@@ -87,14 +87,6 @@ theorem integral_const_mul {α} [MeasurableSpace α] (μ : Measure α) (c : ℝ)
   Integrable (fun x => c * f x) μ := by
   exact MeasureTheory.Integrable.const_mul hf c
 
-/-- Helper theorem: Integral of a real constant multiple pulls out of the integral. -/
-theorem integral_const_mul_eq {α} [MeasurableSpace α] (μ : Measure α) (c : ℝ)
-  (f : α → ℝ) (hf : Integrable f μ) :
-  ∫ x, c * f x ∂ μ = c * ∫ x, f x ∂ μ := by
-  -- The integrability assumption ensures both integrals are well-defined
-  have := hf  -- Acknowledge we need integrability for the integral to be well-defined
-  exact MeasureTheory.integral_const_mul c f
-
 /-- Helper theorem: Monotonicity of the real integral for pointwise ≤ between nonnegative functions,
     assuming the larger one is integrable. -/
 theorem real_integral_mono_of_le
@@ -2295,7 +2287,6 @@ noncomputable def momentumWeightSqrt_mul_CLM (m : ℝ) [Fact (0 < m)] :
     (fun k => (momentumWeightSqrt m k : ℂ))
     hg_meas
     (1 / m)
-    hm_pos
     (momentumWeightSqrt_bounded_ae m)
 
 /-- Multiplication by the square-root momentum weight defines a bounded
@@ -2312,7 +2303,6 @@ noncomputable def momentumWeightSqrt_mathlib_mul_CLM (m : ℝ) [Fact (0 < m)] :
     (fun k => (momentumWeightSqrt_mathlib m k : ℂ))
     hg_meas
     (1 / m)
-    hm_pos
     (momentumWeightSqrt_mathlib_bounded_ae m)
 
 lemma momentumWeightSqrt_mathlib_mul_CLM_spec (m : ℝ) [Fact (0 < m)]
@@ -2320,7 +2310,7 @@ lemma momentumWeightSqrt_mathlib_mul_CLM_spec (m : ℝ) [Fact (0 < m)]
     (momentumWeightSqrt_mathlib_mul_CLM m f) =ᵐ[volume]
       fun k => (momentumWeightSqrt_mathlib m k : ℂ) * f k := by
   unfold momentumWeightSqrt_mathlib_mul_CLM
-  exact linfty_mul_L2_CLM_spec _ _ _ _ _ f
+  exact linfty_mul_L2_CLM_spec _ _ _ _ f
 
 /-- The square-root momentum weight is pointwise bounded by `1 / m` (Mathlib convention). -/
 lemma momentumWeightSqrt_mathlib_le_inv_mass (m : ℝ) [Fact (0 < m)] :

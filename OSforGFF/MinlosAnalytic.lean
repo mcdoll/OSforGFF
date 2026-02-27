@@ -95,14 +95,14 @@ lemma integral_neg_invariance
 
   -- Step 2: Show characteristic functionals are equal
   have hCF_equal : ∀ g : TestFunction,
-      ∫ ω, Complex.exp (Complex.I * (distributionPairing ω g)) ∂μneg
-        = ∫ ω, Complex.exp (Complex.I * (distributionPairing ω g)) ∂μ.toMeasure := by
+      ∫ ω, Complex.exp (Complex.I * (ω g)) ∂μneg
+        = ∫ ω, Complex.exp (Complex.I * (ω g)) ∂μ.toMeasure := by
     intro g
     -- Use the change of variables formula for the map
-    have h_aestrongly_measurable : AEStronglyMeasurable (fun ω => Complex.exp (Complex.I * (distributionPairing ω g))) μneg := by
+    have h_aestrongly_measurable : AEStronglyMeasurable (fun ω => Complex.exp (Complex.I * (ω g))) μneg := by
       -- Inner map: ω ↦ distributionPairing ω g is measurable via continuous linear map
-      have h_inner_meas : Measurable (fun ω : FieldConfiguration => distributionPairing ω g) := by
-        simpa [distributionPairingCLM_apply] using (distributionPairingCLM g).continuous.measurable
+      have h_inner_meas : Measurable (fun ω : FieldConfiguration => ω g) := by
+        exact (WeakDual.eval_continuous g).measurable
       -- Outer map: x ↦ exp(I * x) is continuous hence measurable
       have h_cont_mulI : Continuous (fun x : ℝ => (Complex.I : ℂ) * (x : ℂ)) :=
         continuous_const.mul continuous_ofReal
@@ -113,19 +113,17 @@ lemma integral_neg_invariance
       exact (h_outer_meas.comp h_inner_meas).aestronglyMeasurable
     rw [integral_map (Measurable.aemeasurable negMap_measurable) h_aestrongly_measurable]
     -- The integrand becomes: exp(I * ((-ω) g)) = exp(I * (-(ω g))) = exp(-I * (ω g))
-    have h_neg_pairing : (fun ω => Complex.exp (Complex.I * (distributionPairing (negMap ω) g))) =
-                         (fun ω => Complex.exp (Complex.I * (distributionPairing (-ω) g))) := by
+    have h_neg_pairing : (fun ω => Complex.exp (Complex.I * ((negMap ω) g))) =
+                         (fun ω => Complex.exp (Complex.I * ((-ω) g))) := by
       simp [negMap]
     rw [h_neg_pairing]
     -- Step 1: (-ω) g = -(ω g) by linearity (negation is scalar multiplication by -1)
-    have h_neg_eq : ∀ ω : FieldConfiguration, distributionPairing (-ω) g = -distributionPairing ω g := by
+    have h_neg_eq : ∀ ω : FieldConfiguration, (-ω) g = -ω g := by
       intro ω
-      have h_neg_smul : -ω = (-1 : ℝ) • ω := (neg_one_smul ℝ ω).symm
-      rw [h_neg_smul, distributionPairing_smul]
-      ring
+      rfl
     -- Step 2: Rewrite the LHS using h_neg_eq
-    have h_lhs_eq : (fun ω => Complex.exp (Complex.I * (distributionPairing (-ω) g : ℂ))) =
-                    (fun ω => Complex.exp (-(Complex.I * (distributionPairing ω g : ℂ)))) := by
+    have h_lhs_eq : (fun (ω : FieldConfiguration) => Complex.exp (Complex.I * ((-ω) g : ℂ))) =
+                    (fun ω : FieldConfiguration => Complex.exp (-(Complex.I * (ω g : ℂ)))) := by
       funext ω
       rw [h_neg_eq]
       simp only [ofReal_neg, mul_neg]
@@ -137,10 +135,10 @@ lemma integral_neg_invariance
       congr 1
       simp only [map_mul, Complex.conj_I, Complex.conj_ofReal]
       ring
-    have h_integrand_conj : (fun ω => Complex.exp (-(Complex.I * (distributionPairing ω g : ℂ)))) =
-                            (fun ω => starRingEnd ℂ (Complex.exp (Complex.I * (distributionPairing ω g : ℂ)))) := by
+    have h_integrand_conj : (fun ω : FieldConfiguration => Complex.exp (-(Complex.I * (ω g : ℂ)))) =
+                            (fun ω : FieldConfiguration => starRingEnd ℂ (Complex.exp (Complex.I * (ω g : ℂ)))) := by
       funext ω
-      exact h_exp_neg_conj (distributionPairing ω g)
+      exact h_exp_neg_conj (ω g)
     conv_lhs => rw [h_integrand_conj]
     -- Step 4: Use integral_conj and that the CF is real
     -- The integral ∫ conj(f) = conj(∫ f), and the CF value is real, so conj(CF) = CF
@@ -148,7 +146,6 @@ lemma integral_neg_invariance
     -- The CF h_realCF says ∫ exp(I*ωg) = exp(-½Q(g,g)) which is real
     -- Since exp of a real number is real, conj(exp(-½Q(g,g))) = exp(-½Q(g,g))
     -- First unfold distributionPairing to match h_realCF
-    simp only [distributionPairing] at *
     rw [h_realCF g]
     -- exp(-½Q(g,g)) is exp of a real, so conj = self
     have h_CF_is_real : (Complex.exp (-(1/2 : ℂ) * (C.Q g g : ℂ))).im = 0 := by
@@ -171,7 +168,6 @@ lemma integral_neg_invariance
       Complex.exp (-(1/2 : ℂ) * (C.Q f f : ℂ))) 0 = 1 := by
     simp [show C.Q 0 0 = 0 from by simpa using C.smul_left 0 0 0]
   have hμeq_prob : μneg_prob = μ := by
-    simp only [distributionPairing] at hCF_equal h_realCF
     exact minlos_uniqueness h_cf_cont C.gaussian_cf_pd h_cf_norm
       (fun g => (hCF_equal g).trans (h_realCF g)) h_realCF
   have hμeq : μneg = μ.toMeasure := by

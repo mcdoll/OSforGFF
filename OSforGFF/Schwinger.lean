@@ -127,7 +127,7 @@ S_n(f₁,...,fₙ) = (-i)ⁿ (coefficient of (iJ)ⁿ/n! in Z[J])
     in the infinite sequence of Schwinger functions {S_n}_{n=1}^∞. -/
 def SchwingerFunction (dμ_config : ProbabilityMeasure FieldConfiguration) (n : ℕ)
   (f : Fin n → TestFunction) : ℝ :=
-  ∫ ω, (∏ i, distributionPairing ω (f i)) ∂dμ_config.toMeasure
+  ∫ ω, (∏ i, ω (f i)) ∂dμ_config.toMeasure
 
 /-- The 1-point Schwinger function: the mean field -/
 def SchwingerFunction₁ (dμ_config : ProbabilityMeasure FieldConfiguration)
@@ -151,7 +151,7 @@ lemma schwinger_eq_mean (dμ_config : ProbabilityMeasure FieldConfiguration) (f 
 
 /-- The Schwinger function equals the direct covariance integral for n=2 -/
 lemma schwinger_eq_covariance (dμ_config : ProbabilityMeasure FieldConfiguration) (f g : TestFunction) :
-  SchwingerFunction₂ dμ_config f g = ∫ ω, (distributionPairing ω f) * (distributionPairing ω g) ∂dμ_config.toMeasure := by
+  SchwingerFunction₂ dμ_config f g = ∫ ω, (ω f) * (ω g) ∂dμ_config.toMeasure := by
   unfold SchwingerFunction₂ SchwingerFunction
   -- The product over {0, 1} expands to (f 0) * (f 1) = f * g
   classical
@@ -453,14 +453,14 @@ private lemma prod_const_pow (x : ℝ) (n : ℕ) :
 private lemma schwinger_eq_integral_pow
   (dμ : ProbabilityMeasure _root_.FieldConfiguration) (J : _root_.TestFunction) (n : ℕ) :
   (SchwingerFunction dμ n (fun _ => J) : ℝ)
-  = ∫ ω, (distributionPairing ω J) ^ n ∂ dμ.toMeasure := by
+  = ∫ ω, (ω J) ^ n ∂ dμ.toMeasure := by
   -- Unfold `SchwingerFunction` and simplify the Finite product on `Fin n`
   -- to a power using `prod_const_pow`.
   classical
   unfold SchwingerFunction
   -- integrand: ∏ i, ⟨ω,J⟩ = (⟨ω,J⟩)^n
   -- Pointwise product-to-power identity
-  have hω : ∀ ω : _root_.FieldConfiguration, (∏ _i : Fin n, distributionPairing ω J) = (distributionPairing ω J) ^ n := by
+  have hω : ∀ ω : _root_.FieldConfiguration, (∏ _i : Fin n, ω J) = (ω J) ^ n := by
     intro ω
     simp only [prod_const_pow]
   -- Rewrite under the integral using the pointwise identity

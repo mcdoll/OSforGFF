@@ -434,10 +434,6 @@ The result extends to real test functions via embedding. -/
 lemma star_toComplex_eq_compTimeReflection (f : TestFunction) :
     star (toComplex f) = compTimeReflection (toComplex f) := by
   ext x
-  -- star f is defined as starTestFunction f
-  -- starTestFunction f x = starRingEnd ℂ ((compTimeReflection f) x)
-  simp only [star, starTestFunction]
-  -- Now goal: starRingEnd ℂ ((compTimeReflection (toComplex f)) x) = (compTimeReflection (toComplex f)) x
   exact compTimeReflection_toComplex_star_eq f x
 
 /-- The rpInnerProduct of a real test function equals the complex bilinear form
@@ -466,6 +462,7 @@ theorem freeCovariance_reflection_positive_bilinear_real (m : ℝ) [Fact (0 < m)
       = rpInnerProduct m (toComplex f) := by
     rw [rpInnerProduct_toComplex_eq]
     rfl
+  simp only [toComplex] at h_eq
   rw [h_eq]
   exact h_complex
 
